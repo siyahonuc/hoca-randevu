@@ -55,8 +55,14 @@ st.markdown("""
     [class*="viewerBadge"],
     [class*="ViewerBadge"],
     [class*="stAppDeployButton"],
+    [class*="viewerBadge_container"],
+    [class*="stStatusWidget"],
+    div:has(> a[href*="streamlit.io"]),
+    iframe[src*="streamlit.io"],
+    iframe[title*="Streamlit"],
     a[href*="streamlit.io/cloud"],
-    a[href*="streamlit.io"] {
+    a[href*="streamlit.io"],
+    div[style*="position: fixed"][style*="bottom"][style*="right"] {
         display: none !important;
         visibility: hidden !important;
         pointer-events: none !important;
@@ -101,18 +107,30 @@ st.markdown("""
         box-shadow: 0 10px 24px rgba(11,122,117,0.20);
     }
     .stButton>button:focus { box-shadow: 0 0 0 3px rgba(11,122,117,0.18); }
+    .stButton>button *, .stDownloadButton>button * {
+        color: #ffffff !important;
+    }
 
     .stTextInput input, .stTextArea textarea, .stNumberInput input,
     .stDateInput input, .stSelectbox div[data-baseweb="select"] > div {
         background-color: #ffffff !important;
         color: #111827 !important;
-        border-color: #d8e2e7 !important;
+        border: 1.8px solid #0b7a75 !important;
         border-radius: 8px !important;
+        box-shadow: 0 0 0 3px rgba(11,122,117,0.08) !important;
+    }
+    div[data-baseweb="input"],
+    div[data-baseweb="textarea"],
+    div[data-baseweb="select"] > div,
+    div[data-baseweb="base-input"] {
+        border-color: #0b7a75 !important;
+        border-radius: 8px !important;
+        box-shadow: 0 0 0 3px rgba(11,122,117,0.08) !important;
     }
     .stTextInput input:focus, .stTextArea textarea:focus, .stNumberInput input:focus,
     .stDateInput input:focus {
         border-color: #0b7a75 !important;
-        box-shadow: 0 0 0 3px rgba(11,122,117,0.12) !important;
+        box-shadow: 0 0 0 4px rgba(11,122,117,0.16) !important;
     }
 
     .splash-screen {
@@ -126,7 +144,7 @@ st.markdown("""
         flex-direction: column;
         padding: 28px;
         text-align: center;
-        animation: splashFade 300ms ease 1050ms forwards;
+        animation: splashFade 260ms ease 850ms forwards;
     }
     .splash-mark {
         width: 92px;
@@ -142,6 +160,13 @@ st.markdown("""
         background: #f3fbf9;
         box-shadow: 0 18px 42px rgba(11,122,117,0.12);
         animation: splashPulse 1100ms ease-in-out infinite;
+    }
+    .splash-mark img {
+        max-width: 72px;
+        max-height: 72px;
+        width: auto;
+        height: auto;
+        object-fit: contain;
     }
     .splash-title {
         color: #102a43 !important;
@@ -423,21 +448,22 @@ st.markdown("""
         box-shadow: none;
     }
     .sidebar-brand {
-        padding: 18px 10px 12px;
+        padding: 12px 10px 16px;
         text-align: center;
         border-bottom: 1px solid #e7edf1;
         margin-bottom: 18px;
     }
-    .sidebar-brand-title {
-        color: #12304a !important;
-        font-size: 1.55rem;
-        font-weight: 850;
-        margin: 0;
+    .sidebar-logo img {
+        max-width: 170px;
+        max-height: 88px;
+        width: auto;
+        height: auto;
+        object-fit: contain;
+        display: block;
+        margin: 0 auto;
     }
-    .sidebar-brand-subtitle {
-        color: #6b7c8b !important;
-        font-size: 0.86rem;
-        margin-top: 4px;
+    .top-mobile-logo {
+        display: none;
     }
     .profile-card {
         box-shadow: none;
@@ -587,6 +613,19 @@ st.markdown("""
         border-color: #e2e8ee;
     }
     @media (max-width: 760px) {
+        .top-mobile-logo {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 8px 0 14px;
+        }
+        .top-mobile-logo img {
+            max-width: 168px;
+            max-height: 72px;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+        }
         .block-container {
             padding-left: 1rem;
             padding-right: 1rem;
@@ -659,7 +698,25 @@ def secret_degeri_getir(anahtar):
     return deger or os.getenv(anahtar)
 
 def admin_sifresi_getir():
+    try:
+        if DB_PATH.exists():
+            conn = sqlite3.connect(DB_PATH, timeout=3)
+            cursor = conn.cursor()
+            cursor.execute("SELECT admin_password FROM hoca_profil WHERE id = 1")
+            kayit = cursor.fetchone()
+            conn.close()
+            if kayit and kayit[0]:
+                return kayit[0]
+    except Exception:
+        pass
     return secret_degeri_getir("ADMIN_PASSWORD")
+
+def admin_sifresi_guncelle(yeni_sifre):
+    conn = db_baglan()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE hoca_profil SET admin_password=? WHERE id=1", (yeni_sifre,))
+    conn.commit()
+    conn.close()
 
 def sifreleri_guvenli_karsilastir(girilen, beklenen):
     girilen = str(girilen or "")
@@ -877,15 +934,22 @@ def takvim_hesabi_oku():
         return {"ok": False, "error": str(e)}
 
 # --- 3. VERİTABANI ---
+def kolon_yoksa_ekle(cursor, tablo, kolon, tanim):
+    kolonlar = [row[1] for row in cursor.execute(f"PRAGMA table_info({tablo})").fetchall()]
+    if kolon not in kolonlar:
+        cursor.execute(f"ALTER TABLE {tablo} ADD COLUMN {kolon} {tanim}")
+
 def veritabanı_kur():
     conn = db_baglan()
     cursor = conn.cursor()
     cursor.execute("""CREATE TABLE IF NOT EXISTS hoca_profil 
                    (id INTEGER PRIMARY KEY, unvan TEXT, ucret INTEGER, iban TEXT, ofis TEXT, tel TEXT, email TEXT, 
-                    profile_img TEXT, banner_img TEXT, yasal_metin TEXT, harita_url TEXT, manuel_durum TEXT DEFAULT 'Açık', canli_duyuru TEXT DEFAULT '')""")
+                    profile_img TEXT, banner_img TEXT, logo_img TEXT, yasal_metin TEXT, harita_url TEXT, manuel_durum TEXT DEFAULT 'Açık', canli_duyuru TEXT DEFAULT '', admin_password TEXT)""")
     cursor.execute("CREATE TABLE IF NOT EXISTS mesai (tarih TEXT, saat TEXT, durum INTEGER DEFAULT 0)")
     cursor.execute("CREATE TABLE IF NOT EXISTS hizmetler (id INTEGER PRIMARY KEY AUTOINCREMENT, ad TEXT, fiyat INTEGER, sure INTEGER DEFAULT 45, aciklama TEXT)")
     cursor.execute("CREATE TABLE IF NOT EXISTS randevular (id INTEGER PRIMARY KEY AUTOINCREMENT, isim TEXT, telefon TEXT, hizmet TEXT, sikayet TEXT, tarih TEXT, saat TEXT, durum TEXT DEFAULT 'Beklemede', event_id TEXT)")
+    kolon_yoksa_ekle(cursor, "hoca_profil", "logo_img", "TEXT")
+    kolon_yoksa_ekle(cursor, "hoca_profil", "admin_password", "TEXT")
     
     if cursor.execute("SELECT COUNT(*) FROM hoca_profil").fetchone()[0] == 0:
         cursor.execute("INSERT INTO hoca_profil (id, unvan, manuel_durum, ofis, tel, email) VALUES (1, 'Doç. Dr. Ömer Osman PALA', 'Açık', 'Morfoloji Binası', '0374...', 'fzt.omerpala@gmail.com')")
@@ -922,8 +986,8 @@ veritabanı_kur()
 
 # --- 4. VERİ ÇEKME ---
 conn = db_baglan(); cursor = conn.cursor()
-cursor.execute("SELECT unvan, ucret, iban, ofis, tel, email, profile_img, banner_img, yasal_metin, harita_url, canli_duyuru FROM hoca_profil WHERE id = 1")
-p_unvan, p_ucret, p_iban, p_ofis, p_tel, p_email, p_img, p_banner, p_yasal, p_harita, p_duyuru = cursor.fetchone()
+cursor.execute("SELECT unvan, ucret, iban, ofis, tel, email, profile_img, banner_img, logo_img, yasal_metin, harita_url, canli_duyuru FROM hoca_profil WHERE id = 1")
+p_unvan, p_ucret, p_iban, p_ofis, p_tel, p_email, p_img, p_banner, p_logo, p_yasal, p_harita, p_duyuru = cursor.fetchone()
 conn.close()
 
 simdi = datetime.datetime.now()
@@ -937,17 +1001,22 @@ p_email_href = html.escape(str(p_email or ""), quote=True)
 p_yasal_html = guvenli_metin(p_yasal)
 gorunen_p_img = ilk_var_olan_yol(p_img, "uploads/profile_1363.jpg", "uploads/profile_Gemini_Generated_Image_c7k0akc7k0akc7k0.png")
 gorunen_banner = ilk_var_olan_yol(p_banner, "uploads/banner_1363 (1).jpg", "uploads/banner_Gemini_Generated_Image_c7k0akc7k0akc7k0.png")
+gorunen_logo = ilk_var_olan_yol(p_logo)
 SAYFA_RANDEVU = "📅 Randevu Al"
-SAYFA_ADMIN = "🔐 Hoca Yönetim Paneli"
+SAYFA_ADMIN = "Yönetim"
 SAYFA_SECENEKLERI = [SAYFA_RANDEVU, SAYFA_ADMIN]
 
 # --- 5. SIDEBAR ---
 with st.sidebar:
-    st.markdown('<div class="sidebar-brand"><div class="sidebar-brand-title">BAİBÜ</div><div class="sidebar-brand-subtitle">Fizyoterapi Kliniği</div></div>', unsafe_allow_html=True)
+    if gorunen_logo:
+        st.markdown(f'<div class="sidebar-brand sidebar-logo"><img src="{get_image_data_uri(gorunen_logo, max_width=520)}"></div>', unsafe_allow_html=True)
     if gorunen_p_img:
         st.markdown(f'<div class="profile-img-container"><img src="{get_image_data_uri(gorunen_p_img, max_width=360)}"></div>', unsafe_allow_html=True)
 
     st.markdown(f"""<div class="profile-card"><h4>{p_unvan_html}</h4><hr><div style="text-align:left; font-size:0.9em; color:#4a5568;"><p>📍 {p_ofis_html}</p><p>📞 {p_tel_html}</p><p>✉️ {p_email_html}</p></div></div>""", unsafe_allow_html=True)
+
+if gorunen_logo:
+    st.markdown(f'<div class="top-mobile-logo"><img src="{get_image_data_uri(gorunen_logo, max_width=520)}"></div>', unsafe_allow_html=True)
 
 sayfa = st.radio("İşlem Seçiniz", SAYFA_SECENEKLERI, horizontal=True)
 
@@ -961,23 +1030,25 @@ if sayfa == SAYFA_RANDEVU:
     # --- KARŞILAMA ANİMASYONU ---
     if 'splash_gosterildi' not in st.session_state:
         st.session_state.splash_gosterildi = True
+        splash_logo_src = get_image_data_uri(gorunen_logo, max_width=240) if gorunen_logo else ""
+        splash_mark_html = f'<img src="{splash_logo_src}" alt="Klinik logosu">' if splash_logo_src else "Klinik"
         splash = st.empty()
         with splash.container():
-            st.markdown("""
+            st.markdown(f"""
             <div class="splash-screen">
-                <div class="splash-mark">BAİBÜ</div>
-                <div class="splash-title">Fizyoterapi Kliniği</div>
-                <p class="splash-subtitle">Randevu sistemi hazırlanıyor. Uygun günler ve saatler kontrol ediliyor.</p>
+                <div class="splash-mark">{splash_mark_html}</div>
+                <div class="splash-title">Randevu sistemi hazırlanıyor</div>
+                <p class="splash-subtitle">Uygun günler ve saatler kontrol ediliyor.</p>
                 <div class="splash-steps">
                     <span class="splash-step">Takvim hazırlanıyor</span>
                     <span class="splash-step">Saatler kontrol ediliyor</span>
                     <span class="splash-step">Form açılıyor</span>
                 </div>
                 <div class="splash-line"></div>
-                <div class="splash-note">Lütfen birkaç saniye bekleyin</div>
+                <div class="splash-note">Lütfen kısa bir an bekleyin</div>
             </div>
             """, unsafe_allow_html=True)
-            time.sleep(0.75)
+            time.sleep(0.35)
         splash.empty()
 
     if gorunen_banner:
@@ -1104,7 +1175,7 @@ if sayfa == SAYFA_RANDEVU:
                                 st.session_state.gecici_randevu_verisi = {}
                                 
                                 st.success(f"✅ Randevu talebiniz başarıyla alınmıştır! ({gosterim_tarihi})")
-                                time.sleep(0.5)
+                                time.sleep(0.1)
                                 st.rerun()
                             else:
                                 st.error(hata_mesaji)
@@ -1117,19 +1188,30 @@ if sayfa == SAYFA_RANDEVU:
     else:
         harita_html = '<div style="background:#f1f5f9; padding:20px; border-radius:15px; text-align:center; color:#64748b;">📍 Harita konumu henüz eklenmedi.</div>'
 
-    st.markdown(f"""<div class="footer-container"><h4>{p_unvan_html}</h4><a href="tel:{p_tel_href}" class="footer-btn">📞 Ara</a><a href="mailto:{p_email_href}" class="footer-btn">✉️ E-Posta</a><br><br><h4>Yasal</h4><details><summary>KVKK ve Çerezler</summary><p>{p_yasal_html}</p></details><br><h4>Konum</h4>{harita_html}<div style="text-align:center; margin-top:30px; font-size:0.8em; color:#a0aec0;">Powered by NOTET</div></div>""", unsafe_allow_html=True)
+    st.markdown(f"""<div class="footer-container"><h4>{p_unvan_html}</h4><a href="tel:{p_tel_href}" class="footer-btn">📞 Ara</a><a href="mailto:{p_email_href}" class="footer-btn">✉️ E-Posta</a><br><br><h4>Yasal</h4><details><summary>KVKK ve Çerezler</summary><p>{p_yasal_html}</p></details><br><h4>Konum</h4>{harita_html}</div>""", unsafe_allow_html=True)
 
 # --- 7. HOCA PANELİ ---
 elif sayfa == SAYFA_ADMIN:
     st.title("Hoca Kontrol Merkezi")
     admin_sifresi = str(admin_sifresi_getir() or "")
-    girilen_sifre = st.text_input("Şifre", type="password")
     if not admin_sifresi:
         st.warning("Yönetim paneli şifresi ayarlanmamış. .streamlit/secrets.toml dosyasına ADMIN_PASSWORD ekleyin.")
-    elif not sifreleri_guvenli_karsilastir(girilen_sifre, admin_sifresi):
-        if girilen_sifre:
-            st.error("Şifre hatalı.")
     else:
+        if "admin_giris_onayli" not in st.session_state:
+            st.session_state.admin_giris_onayli = False
+
+        if not st.session_state.admin_giris_onayli:
+            with st.form("admin_login_form"):
+                girilen_sifre = st.text_input("Şifre", type="password")
+                giris_basildi = st.form_submit_button("Giriş Yap", use_container_width=True)
+            if giris_basildi:
+                if sifreleri_guvenli_karsilastir(girilen_sifre, admin_sifresi):
+                    st.session_state.admin_giris_onayli = True
+                    st.rerun()
+                else:
+                    st.error("Şifre hatalı.")
+            st.stop()
+
         t1, t2, t3, t4 = st.tabs(["📊 Özet & Planlama", "📩 Randevular", "💼 Hizmetler Düzenleme", "📝 Profil"])
         
         with t1:
@@ -1156,7 +1238,7 @@ elif sayfa == SAYFA_ADMIN:
                 cursor.execute("UPDATE hoca_profil SET canli_duyuru=? WHERE id=1", (yeni_duyuru,))
                 conn.commit()
                 st.success("✅ Klinik duyurusu başarıyla güncellendi!")
-                time.sleep(0.5)
+                time.sleep(0.1)
                 st.rerun()
             st.markdown('</div>', unsafe_allow_html=True)
             conn.close()
@@ -1178,7 +1260,7 @@ elif sayfa == SAYFA_ADMIN:
                     cursor.execute("INSERT INTO mesai (tarih, saat, durum) VALUES (?,?,?)", (str(sec_tar), s, 1 if d else 0))
                 conn.commit(); conn.close()
                 st.success(f"✅ {format_tarih(str(sec_tar))} tarihi için mesai saatleri kaydedildi!")
-                time.sleep(0.5)
+                time.sleep(0.1)
                 st.rerun()
 
         with t2:
@@ -1218,25 +1300,25 @@ elif sayfa == SAYFA_ADMIN:
                                     cursor.execute("UPDATE randevular SET durum='Onaylandı', event_id=? WHERE id=?", (ev_id, tid))
                                     conn.commit()
                                     st.success("✅ Onaylandı!")
-                                time.sleep(0.5); st.rerun()
+                                time.sleep(0.1); st.rerun()
                                 
                             if c2.button("İptal", key=f"ip_{tid}"):
                                 cursor.execute("UPDATE randevular SET durum='İptal Edildi' WHERE id=?", (tid,))
                                 conn.commit()
-                                st.warning("❌ İptal Edildi."); time.sleep(0.4); st.rerun()
+                                st.warning("❌ İptal Edildi."); time.sleep(0.1); st.rerun()
                                 
                         elif btn_tur == "onaylanan":
                             if st.button("İptal Et", key=f"ip_onay_{tid}"):
                                 if evid and not str(evid).startswith("HATA"): takvimden_sil(evid)
                                 cursor.execute("UPDATE randevular SET durum='İptal Edildi' WHERE id=?", (tid,))
                                 conn.commit()
-                                st.warning("❌ İptal Edildi."); time.sleep(0.4); st.rerun()
+                                st.warning("❌ İptal Edildi."); time.sleep(0.1); st.rerun()
                                 
                         elif btn_tur == "iptal":
                             if st.button("🗑️ Tamamen Sil", key=f"sil_{tid}"):
                                 cursor.execute("DELETE FROM randevular WHERE id=?", (tid,))
                                 conn.commit()
-                                st.error("🗑️ Kayıt silindi."); time.sleep(0.4); st.rerun()
+                                st.error("🗑️ Kayıt silindi."); time.sleep(0.1); st.rerun()
 
             with col_bekleyen:
                 st.markdown('<div class="col-header" style="background-color:#f59e0b;">🟠 BEKLEYENLER</div>', unsafe_allow_html=True)
@@ -1266,7 +1348,7 @@ elif sayfa == SAYFA_ADMIN:
                     cursor.execute("INSERT INTO hizmetler (ad, fiyat, sure) VALUES (?,?,?)", (nad, nfiyat, nsure))
                     conn.commit()
                     st.success(f"✅ '{nad}' hizmeti {nsure} dk süre ve {nfiyat} ₺ fiyatla eklendi!")
-                    time.sleep(0.5)
+                    time.sleep(0.1)
                     st.rerun()
             
             st.markdown("<hr>", unsafe_allow_html=True)
@@ -1286,13 +1368,13 @@ elif sayfa == SAYFA_ADMIN:
                             cursor.execute("UPDATE hizmetler SET ad=?, fiyat=?, sure=? WHERE id=?", (u_ad, u_fiyat, u_sure, hid))
                             conn.commit()
                             st.success(f"✅ {u_ad} güncellendi!")
-                            time.sleep(0.4)
+                            time.sleep(0.1)
                             st.rerun()
                         if c2.form_submit_button("🗑️ Hizmeti Tamamen Sil", type="primary"):
                             cursor.execute("DELETE FROM hizmetler WHERE id=?", (hid,))
                             conn.commit()
                             st.error(f"🗑️ {had} hizmeti sistemden silindi.")
-                            time.sleep(0.4)
+                            time.sleep(0.1)
                             st.rerun()
             conn.close()
 
@@ -1320,6 +1402,27 @@ elif sayfa == SAYFA_ADMIN:
                 st.markdown("</div>", unsafe_allow_html=True)
 
             with st.container():
+                st.markdown('<div class="admin-card">', unsafe_allow_html=True)
+                st.markdown("**Yönetim Şifresi**")
+                with st.form("admin_sifre_form"):
+                    yeni_sifre = st.text_input("Yeni şifre", type="password")
+                    yeni_sifre_tekrar = st.text_input("Yeni şifre tekrar", type="password")
+                    sifre_kaydet = st.form_submit_button("Şifreyi Güncelle", use_container_width=True)
+                if sifre_kaydet:
+                    if len(yeni_sifre.strip()) < 6:
+                        st.error("Yeni şifre en az 6 karakter olmalı.")
+                    elif yeni_sifre != yeni_sifre_tekrar:
+                        st.error("Şifreler eşleşmiyor.")
+                    else:
+                        admin_sifresi_guncelle(yeni_sifre.strip())
+                        st.session_state.admin_giris_onayli = False
+                        st.success("Şifre güncellendi. Yeni şifreyle tekrar giriş yapabilirsiniz.")
+                        time.sleep(0.1)
+                        st.rerun()
+                st.markdown("</div>", unsafe_allow_html=True)
+
+            with st.container():
+                up_logo = st.file_uploader("Klinik Logosu", type=["jpg","jpeg","png"])
                 up_p = st.file_uploader("Profil Resmi", type=["jpg","png"])
                 if up_p:
                     img = Image.open(up_p)
@@ -1336,12 +1439,15 @@ elif sayfa == SAYFA_ADMIN:
                 u_yas = st.text_area("Yasal Metin", p_yasal); u_har = st.text_input("Harita URL (Sadece link veya HTML kodun tamamı)", p_harita)
                 
                 if st.form_submit_button("Bilgileri Güncelle"):
-                    pi, bi = p_img, p_banner
+                    pi, bi, li = p_img, p_banner, p_logo
                     if u_har and "<iframe" in u_har:
                         match = re.search(r'src="([^"]+)"', u_har)
                         if match: u_har = match.group(1)
                     u_har = temiz_url_degeri(u_har)
 
+                    if up_logo:
+                        li = upload_db_yolu(f"logo_{int(time.time())}.png")
+                        with open(local_path(li),"wb") as f: f.write(up_logo.getbuffer())
                     if 'new_p' in st.session_state:
                         pi = upload_db_yolu(f"p_{int(time.time())}.png")
                         st.session_state.new_p.save(local_path(pi))
@@ -1350,8 +1456,8 @@ elif sayfa == SAYFA_ADMIN:
                         with open(local_path(bi),"wb") as f: f.write(up_b.getbuffer())
                     
                     conn = db_baglan(); cursor = conn.cursor()
-                    cursor.execute("UPDATE hoca_profil SET unvan=?, ofis=?, tel=?, email=?, profile_img=?, banner_img=?, yasal_metin=?, harita_url=? WHERE id=1", (u_unvan, u_ofis, u_tel, u_mail, pi, bi, u_yas, u_har))
+                    cursor.execute("UPDATE hoca_profil SET unvan=?, ofis=?, tel=?, email=?, profile_img=?, banner_img=?, logo_img=?, yasal_metin=?, harita_url=? WHERE id=1", (u_unvan, u_ofis, u_tel, u_mail, pi, bi, li, u_yas, u_har))
                     conn.commit(); conn.close()
                     st.success("✅ Tüm profil bilgileri ve görseller başarıyla güncellendi!")
-                    time.sleep(0.5)
+                    time.sleep(0.1)
                     st.rerun()
