@@ -8,6 +8,7 @@ import re
 import html
 import hmac
 import json
+from io import BytesIO
 from pathlib import Path
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -125,7 +126,7 @@ st.markdown("""
         flex-direction: column;
         padding: 28px;
         text-align: center;
-        animation: splashFade 380ms ease 1850ms forwards;
+        animation: splashFade 300ms ease 1050ms forwards;
     }
     .splash-mark {
         width: 92px;
@@ -140,7 +141,7 @@ st.markdown("""
         font-size: 1.45rem;
         background: #f3fbf9;
         box-shadow: 0 18px 42px rgba(11,122,117,0.12);
-        animation: splashPulse 1300ms ease-in-out infinite;
+        animation: splashPulse 1100ms ease-in-out infinite;
     }
     .splash-title {
         color: #102a43 !important;
@@ -171,7 +172,7 @@ st.markdown("""
         height: 100%;
         background: linear-gradient(90deg, #0b7a75, #f6c453);
         border-radius: 999px;
-        animation: splashLoad 1350ms ease-in-out infinite;
+        animation: splashLoad 1100ms ease-in-out infinite;
     }
     .splash-steps {
         display: flex;
@@ -672,17 +673,42 @@ def format_tarih(tarih_str):
     try: return datetime.datetime.strptime(tarih_str, "%Y-%m-%d").strftime("%d.%m.%Y")
     except: return tarih_str
 
+@st.cache_data(show_spinner=False)
+def image_data_uri_cached(path_str, mtime, max_width):
+    path = Path(path_str)
+    try:
+        img = Image.open(path)
+        img.thumbnail((max_width, max_width), Image.LANCZOS)
+        output = BytesIO()
+        if img.mode in ("RGBA", "LA"):
+            img.save(output, format="PNG", optimize=True)
+            mime = "image/png"
+        else:
+            img = img.convert("RGB")
+            img.save(output, format="JPEG", quality=82, optimize=True)
+            mime = "image/jpeg"
+        return f"data:{mime};base64,{base64.b64encode(output.getvalue()).decode()}"
+    except Exception:
+        try:
+            mime = "image/jpeg" if path.suffix.lower() in [".jpg", ".jpeg"] else "image/png"
+            return f"data:{mime};base64,{base64.b64encode(path.read_bytes()).decode()}"
+        except Exception:
+            return ""
+
 def get_base64_image(image_path):
     try:
         with open(local_path(image_path), "rb") as f: return base64.b64encode(f.read()).decode()
     except: return ""
 
-def get_image_data_uri(image_path):
+def get_image_data_uri(image_path, max_width=1200):
     path = local_path(image_path)
     if not path or not path.exists():
         return ""
-    mime = "image/jpeg" if path.suffix.lower() in [".jpg", ".jpeg"] else "image/png"
-    return f"data:{mime};base64,{get_base64_image(image_path)}"
+    try:
+        return image_data_uri_cached(str(path), path.stat().st_mtime, max_width)
+    except Exception:
+        mime = "image/jpeg" if path.suffix.lower() in [".jpg", ".jpeg"] else "image/png"
+        return f"data:{mime};base64,{get_base64_image(image_path)}"
 
 def ilk_var_olan_yol(*paths):
     for path in paths:
@@ -720,6 +746,12 @@ def google_token_kaydet(creds):
         TOKEN_PATH.write_text(creds.to_json(), encoding="utf-8")
     except Exception:
         pass
+
+def google_takvim_hazir_mi():
+    try:
+        return bool(google_token_info_getir()) and (bool(secret_degeri_getir("GOOGLE_CREDENTIALS_JSON")) or CREDENTIALS_PATH.exists())
+    except Exception:
+        return False
 
 def get_tum_saatler():
     saatler = []
@@ -913,7 +945,7 @@ SAYFA_SECENEKLERI = [SAYFA_RANDEVU, SAYFA_ADMIN]
 with st.sidebar:
     st.markdown('<div class="sidebar-brand"><div class="sidebar-brand-title">BAİBÜ</div><div class="sidebar-brand-subtitle">Fizyoterapi Kliniği</div></div>', unsafe_allow_html=True)
     if gorunen_p_img:
-        st.markdown(f'<div class="profile-img-container"><img src="{get_image_data_uri(gorunen_p_img)}"></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="profile-img-container"><img src="{get_image_data_uri(gorunen_p_img, max_width=360)}"></div>', unsafe_allow_html=True)
 
     st.markdown(f"""<div class="profile-card"><h4>{p_unvan_html}</h4><hr><div style="text-align:left; font-size:0.9em; color:#4a5568;"><p>📍 {p_ofis_html}</p><p>📞 {p_tel_html}</p><p>✉️ {p_email_html}</p></div></div>""", unsafe_allow_html=True)
 
@@ -945,11 +977,11 @@ if sayfa == SAYFA_RANDEVU:
                 <div class="splash-note">Lütfen birkaç saniye bekleyin</div>
             </div>
             """, unsafe_allow_html=True)
-            time.sleep(2.2)
+            time.sleep(0.75)
         splash.empty()
 
     if gorunen_banner:
-        st.markdown(f'<div class="custom-banner"><img src="{get_image_data_uri(gorunen_banner)}"></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="custom-banner"><img src="{get_image_data_uri(gorunen_banner, max_width=1400)}"></div>', unsafe_allow_html=True)
     
     if p_duyuru and p_duyuru.strip() != "":
         st.markdown(f'<div class="announcement-box">📢 Klinik Duyurusu: {guvenli_metin(p_duyuru)}</div>', unsafe_allow_html=True)
@@ -1072,7 +1104,7 @@ if sayfa == SAYFA_RANDEVU:
                                 st.session_state.gecici_randevu_verisi = {}
                                 
                                 st.success(f"✅ Randevu talebiniz başarıyla alınmıştır! ({gosterim_tarihi})")
-                                time.sleep(2.5)
+                                time.sleep(0.5)
                                 st.rerun()
                             else:
                                 st.error(hata_mesaji)
@@ -1124,7 +1156,7 @@ elif sayfa == SAYFA_ADMIN:
                 cursor.execute("UPDATE hoca_profil SET canli_duyuru=? WHERE id=1", (yeni_duyuru,))
                 conn.commit()
                 st.success("✅ Klinik duyurusu başarıyla güncellendi!")
-                time.sleep(1.5)
+                time.sleep(0.5)
                 st.rerun()
             st.markdown('</div>', unsafe_allow_html=True)
             conn.close()
@@ -1146,7 +1178,7 @@ elif sayfa == SAYFA_ADMIN:
                     cursor.execute("INSERT INTO mesai (tarih, saat, durum) VALUES (?,?,?)", (str(sec_tar), s, 1 if d else 0))
                 conn.commit(); conn.close()
                 st.success(f"✅ {format_tarih(str(sec_tar))} tarihi için mesai saatleri kaydedildi!")
-                time.sleep(1.5)
+                time.sleep(0.5)
                 st.rerun()
 
         with t2:
@@ -1177,7 +1209,7 @@ elif sayfa == SAYFA_ADMIN:
                                 cursor.execute("SELECT sure FROM hizmetler WHERE ad=?", (thz,))
                                 h_sure_row = cursor.fetchone()
                                 h_sure = h_sure_row[0] if h_sure_row else 45
-                                ev_id = takvime_ekle(tisim, thz, ttar, tsaat, ttel, h_sure)
+                                ev_id = takvime_ekle(tisim, thz, ttar, tsaat, ttel, h_sure) if google_takvim_hazir_mi() else None
                                 if ev_id and str(ev_id).startswith("HATA"):
                                     cursor.execute("UPDATE randevular SET durum='Onaylandı', event_id=NULL WHERE id=?", (tid,))
                                     conn.commit()
@@ -1186,25 +1218,25 @@ elif sayfa == SAYFA_ADMIN:
                                     cursor.execute("UPDATE randevular SET durum='Onaylandı', event_id=? WHERE id=?", (ev_id, tid))
                                     conn.commit()
                                     st.success("✅ Onaylandı!")
-                                time.sleep(2.5); st.rerun()
+                                time.sleep(0.5); st.rerun()
                                 
                             if c2.button("İptal", key=f"ip_{tid}"):
                                 cursor.execute("UPDATE randevular SET durum='İptal Edildi' WHERE id=?", (tid,))
                                 conn.commit()
-                                st.warning("❌ İptal Edildi."); time.sleep(1); st.rerun()
+                                st.warning("❌ İptal Edildi."); time.sleep(0.4); st.rerun()
                                 
                         elif btn_tur == "onaylanan":
                             if st.button("İptal Et", key=f"ip_onay_{tid}"):
                                 if evid and not str(evid).startswith("HATA"): takvimden_sil(evid)
                                 cursor.execute("UPDATE randevular SET durum='İptal Edildi' WHERE id=?", (tid,))
                                 conn.commit()
-                                st.warning("❌ İptal Edildi."); time.sleep(1); st.rerun()
+                                st.warning("❌ İptal Edildi."); time.sleep(0.4); st.rerun()
                                 
                         elif btn_tur == "iptal":
                             if st.button("🗑️ Tamamen Sil", key=f"sil_{tid}"):
                                 cursor.execute("DELETE FROM randevular WHERE id=?", (tid,))
                                 conn.commit()
-                                st.error("🗑️ Kayıt silindi."); time.sleep(1); st.rerun()
+                                st.error("🗑️ Kayıt silindi."); time.sleep(0.4); st.rerun()
 
             with col_bekleyen:
                 st.markdown('<div class="col-header" style="background-color:#f59e0b;">🟠 BEKLEYENLER</div>', unsafe_allow_html=True)
@@ -1234,7 +1266,7 @@ elif sayfa == SAYFA_ADMIN:
                     cursor.execute("INSERT INTO hizmetler (ad, fiyat, sure) VALUES (?,?,?)", (nad, nfiyat, nsure))
                     conn.commit()
                     st.success(f"✅ '{nad}' hizmeti {nsure} dk süre ve {nfiyat} ₺ fiyatla eklendi!")
-                    time.sleep(1.5)
+                    time.sleep(0.5)
                     st.rerun()
             
             st.markdown("<hr>", unsafe_allow_html=True)
@@ -1254,13 +1286,13 @@ elif sayfa == SAYFA_ADMIN:
                             cursor.execute("UPDATE hizmetler SET ad=?, fiyat=?, sure=? WHERE id=?", (u_ad, u_fiyat, u_sure, hid))
                             conn.commit()
                             st.success(f"✅ {u_ad} güncellendi!")
-                            time.sleep(1)
+                            time.sleep(0.4)
                             st.rerun()
                         if c2.form_submit_button("🗑️ Hizmeti Tamamen Sil", type="primary"):
                             cursor.execute("DELETE FROM hizmetler WHERE id=?", (hid,))
                             conn.commit()
                             st.error(f"🗑️ {had} hizmeti sistemden silindi.")
-                            time.sleep(1)
+                            time.sleep(0.4)
                             st.rerun()
             conn.close()
 
@@ -1321,5 +1353,5 @@ elif sayfa == SAYFA_ADMIN:
                     cursor.execute("UPDATE hoca_profil SET unvan=?, ofis=?, tel=?, email=?, profile_img=?, banner_img=?, yasal_metin=?, harita_url=? WHERE id=1", (u_unvan, u_ofis, u_tel, u_mail, pi, bi, u_yas, u_har))
                     conn.commit(); conn.close()
                     st.success("✅ Tüm profil bilgileri ve görseller başarıyla güncellendi!")
-                    time.sleep(1.5)
+                    time.sleep(0.5)
                     st.rerun()
