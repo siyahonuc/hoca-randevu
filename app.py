@@ -44,7 +44,22 @@ st.markdown("""
         background: rgba(255,255,255,0.92) !important;
         border-bottom: 1px solid #edf2f7;
     }
-    [data-testid="stToolbar"], footer { display: none !important; }
+    #MainMenu,
+    footer,
+    [data-testid="stToolbar"],
+    [data-testid="stDecoration"],
+    [data-testid="stStatusWidget"],
+    [data-testid="stDeployButton"],
+    [data-testid="manage-app-button"],
+    [class*="viewerBadge"],
+    [class*="ViewerBadge"],
+    [class*="stAppDeployButton"],
+    a[href*="streamlit.io/cloud"],
+    a[href*="streamlit.io"] {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+    }
     .block-container {
         max-width: 1160px;
         padding-top: 2rem;
@@ -103,17 +118,19 @@ st.markdown("""
         position: fixed;
         inset: 0;
         z-index: 99999;
-        background: #ffffff;
+        background: linear-gradient(180deg, #ffffff 0%, #f7fbfa 100%);
         display: flex;
         align-items: center;
         justify-content: center;
         flex-direction: column;
-        animation: splashFade 260ms ease 950ms forwards;
+        padding: 28px;
+        text-align: center;
+        animation: splashFade 380ms ease 1850ms forwards;
     }
     .splash-mark {
-        width: 84px;
-        height: 84px;
-        border-radius: 50%;
+        width: 92px;
+        height: 92px;
+        border-radius: 24px;
         border: 1px solid #c9e7e2;
         display: flex;
         align-items: center;
@@ -122,35 +139,61 @@ st.markdown("""
         font-weight: 900;
         font-size: 1.45rem;
         background: #f3fbf9;
-        animation: splashPulse 900ms ease-in-out infinite;
+        box-shadow: 0 18px 42px rgba(11,122,117,0.12);
+        animation: splashPulse 1300ms ease-in-out infinite;
     }
     .splash-title {
         color: #102a43 !important;
-        font-size: 1.25rem;
+        font-size: 1.45rem;
         font-weight: 800;
-        margin-top: 18px;
-        margin-bottom: 4px;
+        margin-top: 22px;
+        margin-bottom: 8px;
     }
     .splash-subtitle {
         color: #64748b !important;
-        font-size: 0.95rem;
+        font-size: 1rem;
+        line-height: 1.5;
         margin: 0;
+        max-width: 360px;
     }
     .splash-line {
-        width: 140px;
-        height: 3px;
+        width: min(280px, 72vw);
+        height: 5px;
         background: #e6eef2;
         border-radius: 999px;
         overflow: hidden;
-        margin-top: 18px;
+        margin-top: 24px;
     }
     .splash-line::after {
         content: "";
         display: block;
-        width: 48%;
+        width: 42%;
         height: 100%;
-        background: #f6c453;
-        animation: splashLoad 900ms ease-in-out infinite;
+        background: linear-gradient(90deg, #0b7a75, #f6c453);
+        border-radius: 999px;
+        animation: splashLoad 1350ms ease-in-out infinite;
+    }
+    .splash-steps {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 18px;
+        max-width: 460px;
+    }
+    .splash-step {
+        color: #516173 !important;
+        background: #ffffff;
+        border: 1px solid #e2ecef;
+        border-radius: 999px;
+        padding: 7px 11px;
+        font-size: 0.84rem;
+        font-weight: 700;
+    }
+    .splash-note {
+        color: #8a97a6 !important;
+        font-size: 0.82rem;
+        margin-top: 18px;
     }
     @keyframes splashPulse {
         0%, 100% { transform: scale(1); box-shadow: 0 0 0 rgba(11,122,117,0); }
@@ -513,9 +556,24 @@ st.markdown("""
     }
     .announcement-box {
         background: #fff9ed;
-        border-left-color: #d89a21;
+        border-left: 4px solid #d89a21;
         color: #6b4a0b !important;
         box-shadow: none;
+        width: 100%;
+        min-height: 0;
+        height: auto;
+        padding: 14px 18px;
+        margin: 8px 0 24px;
+        border-radius: 0 8px 8px 0;
+        line-height: 1.55;
+        font-size: 0.98rem;
+        font-weight: 750;
+        display: block;
+        align-items: initial;
+        white-space: normal;
+        overflow: visible;
+        overflow-wrap: anywhere;
+        word-break: normal;
     }
     .working-hours-card {
         border-color: #d6e0e6;
@@ -528,6 +586,18 @@ st.markdown("""
         border-color: #e2e8ee;
     }
     @media (max-width: 760px) {
+        .block-container {
+            padding-left: 1rem;
+            padding-right: 1rem;
+            padding-bottom: 4.5rem;
+        }
+        .announcement-box {
+            padding: 13px 14px;
+            margin-top: 10px;
+            margin-bottom: 20px;
+            font-size: 0.94rem;
+            line-height: 1.6;
+        }
         .booking-intro {
             display: block;
             padding-top: 18px;
@@ -835,6 +905,9 @@ p_email_href = html.escape(str(p_email or ""), quote=True)
 p_yasal_html = guvenli_metin(p_yasal)
 gorunen_p_img = ilk_var_olan_yol(p_img, "uploads/profile_1363.jpg", "uploads/profile_Gemini_Generated_Image_c7k0akc7k0akc7k0.png")
 gorunen_banner = ilk_var_olan_yol(p_banner, "uploads/banner_1363 (1).jpg", "uploads/banner_Gemini_Generated_Image_c7k0akc7k0akc7k0.png")
+SAYFA_RANDEVU = "📅 Randevu Al"
+SAYFA_ADMIN = "🔐 Hoca Yönetim Paneli"
+SAYFA_SECENEKLERI = [SAYFA_RANDEVU, SAYFA_ADMIN]
 
 # --- 5. SIDEBAR ---
 with st.sidebar:
@@ -843,7 +916,8 @@ with st.sidebar:
         st.markdown(f'<div class="profile-img-container"><img src="{get_image_data_uri(gorunen_p_img)}"></div>', unsafe_allow_html=True)
 
     st.markdown(f"""<div class="profile-card"><h4>{p_unvan_html}</h4><hr><div style="text-align:left; font-size:0.9em; color:#4a5568;"><p>📍 {p_ofis_html}</p><p>📞 {p_tel_html}</p><p>✉️ {p_email_html}</p></div></div>""", unsafe_allow_html=True)
-    sayfa = st.selectbox("İşlem Seçiniz", ["📅 Randevu Al", "🔐 Hoca Yönetim Paneli"])
+
+sayfa = st.radio("İşlem Seçiniz", SAYFA_SECENEKLERI, horizontal=True)
 
 if 'randevu_adimi' not in st.session_state:
     st.session_state.randevu_adimi = 1
@@ -851,7 +925,7 @@ if 'gecici_randevu_verisi' not in st.session_state:
     st.session_state.gecici_randevu_verisi = {}
 
 # --- 6. RANDEVU AL (HASTA EKRANI) ---
-if sayfa == "📅 Randevu Al":
+if sayfa == SAYFA_RANDEVU:
     # --- KARŞILAMA ANİMASYONU ---
     if 'splash_gosterildi' not in st.session_state:
         st.session_state.splash_gosterildi = True
@@ -861,11 +935,17 @@ if sayfa == "📅 Randevu Al":
             <div class="splash-screen">
                 <div class="splash-mark">BAİBÜ</div>
                 <div class="splash-title">Fizyoterapi Kliniği</div>
-                <p class="splash-subtitle">Randevu sistemi hazırlanıyor</p>
+                <p class="splash-subtitle">Randevu sistemi hazırlanıyor. Uygun günler ve saatler kontrol ediliyor.</p>
+                <div class="splash-steps">
+                    <span class="splash-step">Takvim hazırlanıyor</span>
+                    <span class="splash-step">Saatler kontrol ediliyor</span>
+                    <span class="splash-step">Form açılıyor</span>
+                </div>
                 <div class="splash-line"></div>
+                <div class="splash-note">Lütfen birkaç saniye bekleyin</div>
             </div>
             """, unsafe_allow_html=True)
-            time.sleep(1.15)
+            time.sleep(2.2)
         splash.empty()
 
     if gorunen_banner:
@@ -1008,7 +1088,7 @@ if sayfa == "📅 Randevu Al":
     st.markdown(f"""<div class="footer-container"><h4>{p_unvan_html}</h4><a href="tel:{p_tel_href}" class="footer-btn">📞 Ara</a><a href="mailto:{p_email_href}" class="footer-btn">✉️ E-Posta</a><br><br><h4>Yasal</h4><details><summary>KVKK ve Çerezler</summary><p>{p_yasal_html}</p></details><br><h4>Konum</h4>{harita_html}<div style="text-align:center; margin-top:30px; font-size:0.8em; color:#a0aec0;">Powered by NOTET</div></div>""", unsafe_allow_html=True)
 
 # --- 7. HOCA PANELİ ---
-elif sayfa == "🔐 Hoca Yönetim Paneli":
+elif sayfa == SAYFA_ADMIN:
     st.title("Hoca Kontrol Merkezi")
     admin_sifresi = str(admin_sifresi_getir() or "")
     girilen_sifre = st.text_input("Şifre", type="password")
