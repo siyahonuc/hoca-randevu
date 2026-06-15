@@ -8,14 +8,12 @@ import re
 import html
 import hmac
 import json
-import zipfile
 from io import BytesIO
 from pathlib import Path
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
-from googleapiclient.http import MediaIoBaseUpload, MediaIoBaseDownload
 from PIL import Image
 
 try:
@@ -32,8 +30,6 @@ DB_PATH = Path(os.getenv("DB_PATH") or (BASE_DIR / "randevu_sistemi.db"))
 TOKEN_PATH = BASE_DIR / "token.json"
 CREDENTIALS_PATH = BASE_DIR / "credentials.json"
 GOOGLE_CALENDAR_SCOPE = 'https://www.googleapis.com/auth/calendar'
-GOOGLE_DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file'
-GOOGLE_SCOPES = [GOOGLE_CALENDAR_SCOPE, GOOGLE_DRIVE_SCOPE]
 CALENDAR_SCOPES = [GOOGLE_CALENDAR_SCOPE]
 
 UPLOAD_DIR.mkdir(exist_ok=True)
@@ -872,7 +868,6 @@ def admin_sifresi_guncelle(yeni_sifre):
     cursor.execute("UPDATE hoca_profil SET admin_password=? WHERE id=1", (yeni_sifre,))
     conn.commit()
     conn.close()
-    kalici_yedek_kaydet()
 
 def sifreleri_guvenli_karsilastir(girilen, beklenen):
     girilen = str(girilen or "")
@@ -966,16 +961,14 @@ def google_takvim_hazir_mi():
     except Exception:
         return False
 
-def google_kimlik_bilgileri_getir(scopes=None, canli_hata_mesaji=None, allow_interactive=True):
-    scopes = scopes or GOOGLE_SCOPES
+def google_kimlik_bilgileri_getir(scopes=None, canli_hata_mesaji=None):
+    scopes = scopes or CALENDAR_SCOPES
     creds = None
     credentials_info = google_credentials_info_getir()
     token_info = google_token_info_getir()
     if token_info:
         creds = Credentials.from_authorized_user_info(token_info, scopes)
     kapsam_eksik = creds and hasattr(creds, "has_scopes") and not creds.has_scopes(scopes)
-    if (not creds or kapsam_eksik) and not allow_interactive:
-        raise RuntimeError(canli_hata_mesaji or "Google yetkisi eksik. Token yeniden olusturulmali.")
     if not creds or not creds.valid or kapsam_eksik:
         if creds and creds.expired and creds.refresh_token and not kapsam_eksik:
             try:
@@ -1045,7 +1038,6 @@ def randevu_kaydet(veri):
             (veri["isim"], veri["tel"], veri["hizmet_adi"], veri["sikayet"], veri["tarih"], veri["saat"])
         )
         conn.commit()
-        kalici_yedek_kaydet()
         return True, None
     except sqlite3.Error as e:
         conn.rollback()
@@ -1061,17 +1053,6 @@ def get_calendar_service():
         credentials=google_kimlik_bilgileri_getir(
             CALENDAR_SCOPES,
             "Canli yayin icin Calendar yetkisi olan GOOGLE_TOKEN_JSON gerekir.",
-        ),
-    )
-
-def get_drive_service():
-    return build(
-        'drive',
-        'v3',
-        credentials=google_kimlik_bilgileri_getir(
-            GOOGLE_SCOPES,
-            "Canli yayinda kalici yedek icin Calendar ve Drive yetkisi olan GOOGLE_TOKEN_JSON gerekir.",
-            allow_interactive=False,
         ),
     )
 
@@ -1114,102 +1095,6 @@ def takvim_hesabi_oku():
         }
     except Exception as e:
         return {"ok": False, "error": str(e)}
-
-def kalici_yedek_aktif_mi():
-    deger = secret_degeri_getir("ENABLE_GOOGLE_DRIVE_BACKUP")
-    return str(deger or "").strip().lower() in {"1", "true", "yes", "evet", "aktif"}
-
-def kalici_yedek_adi():
-    return str(secret_degeri_getir("GOOGLE_DRIVE_BACKUP_NAME") or "hoca_randevu_kalici_yedek.zip")
-
-def kalici_yedek_dosyasi_bul(service):
-    ad = kalici_yedek_adi().replace("'", "\\'")
-    sonuc = service.files().list(
-        q=f"name='{ad}' and trashed=false",
-        spaces="drive",
-        fields="files(id, name, modifiedTime)",
-        pageSize=1,
-    ).execute()
-    dosyalar = sonuc.get("files", [])
-    return dosyalar[0] if dosyalar else None
-
-def kalici_yedek_zip_olustur():
-    buffer = BytesIO()
-    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zip_dosya:
-        if DB_PATH.exists():
-            zip_dosya.write(DB_PATH, "randevu_sistemi.db")
-        if UPLOAD_DIR.exists():
-            for dosya in UPLOAD_DIR.rglob("*"):
-                if dosya.is_file():
-                    hedef = Path("uploads") / dosya.relative_to(UPLOAD_DIR)
-                    zip_dosya.write(dosya, str(hedef).replace("\\", "/"))
-    buffer.seek(0)
-    return buffer
-
-def kalici_yedek_zip_ac(zip_bytes):
-    with zipfile.ZipFile(BytesIO(zip_bytes), "r") as zip_dosya:
-        for bilgi in zip_dosya.infolist():
-            ad = bilgi.filename.replace("\\", "/")
-            if bilgi.is_dir():
-                continue
-            if ad == "randevu_sistemi.db":
-                hedef = DB_PATH
-            elif ad.startswith("uploads/"):
-                hedef = UPLOAD_DIR / ad.replace("uploads/", "", 1)
-            else:
-                continue
-            hedef.parent.mkdir(parents=True, exist_ok=True)
-            hedef.write_bytes(zip_dosya.read(bilgi))
-
-def kalici_yedek_yukle():
-    if not kalici_yedek_aktif_mi():
-        return {"ok": False, "status": "kapali"}
-    if st.session_state.get("_kalici_yedek_yuklendi"):
-        return {"ok": True, "status": "zaten_yuklendi"}
-    try:
-        service = get_drive_service()
-        dosya = kalici_yedek_dosyasi_bul(service)
-        if not dosya:
-            st.session_state["_kalici_yedek_yuklendi"] = True
-            st.session_state["_kalici_yedek_durum"] = "Henüz Google Drive yedeği yok. İlk veri değişikliğinde oluşturulacak."
-            return {"ok": True, "status": "yedek_yok"}
-        buffer = BytesIO()
-        indirici = MediaIoBaseDownload(buffer, service.files().get_media(fileId=dosya["id"]))
-        tamamlandi = False
-        while not tamamlandi:
-            _, tamamlandi = indirici.next_chunk()
-        kalici_yedek_zip_ac(buffer.getvalue())
-        st.session_state["_kalici_yedek_yuklendi"] = True
-        st.session_state["_kalici_yedek_durum"] = f"Google Drive yedeği yüklendi: {dosya.get('modifiedTime', '')}"
-        return {"ok": True, "status": "yuklendi"}
-    except Exception as e:
-        st.session_state["_kalici_yedek_hata"] = str(e)
-        return {"ok": False, "status": "hata", "error": str(e)}
-
-def kalici_yedek_kaydet():
-    if not kalici_yedek_aktif_mi():
-        return {"ok": False, "status": "kapali"}
-    try:
-        service = get_drive_service()
-        dosya = kalici_yedek_dosyasi_bul(service)
-        zip_buffer = kalici_yedek_zip_olustur()
-        media = MediaIoBaseUpload(zip_buffer, mimetype="application/zip", resumable=False)
-        if dosya:
-            service.files().update(fileId=dosya["id"], media_body=media).execute()
-            dosya_id = dosya["id"]
-        else:
-            olusan = service.files().create(
-                body={"name": kalici_yedek_adi(), "mimeType": "application/zip"},
-                media_body=media,
-                fields="id",
-            ).execute()
-            dosya_id = olusan.get("id")
-        st.session_state["_kalici_yedek_son"] = datetime.datetime.now().strftime("%d.%m.%Y %H:%M:%S")
-        st.session_state["_kalici_yedek_durum"] = f"Google Drive yedeği kaydedildi. Dosya ID: {dosya_id}"
-        return {"ok": True, "status": "kaydedildi", "id": dosya_id}
-    except Exception as e:
-        st.session_state["_kalici_yedek_hata"] = str(e)
-        return {"ok": False, "status": "hata", "error": str(e)}
 
 # --- 3. VERİTABANI ---
 def kolon_yoksa_ekle(cursor, tablo, kolon, tanim):
@@ -1260,7 +1145,6 @@ def aktif_saatleri_getir(secilen_tarih_obj):
                 
     return sorted(list(set(acik_saatler) - engelli_saatler))
 
-kalici_yedek_yukle()
 veritabanı_kur()
 
 # --- 4. VERİ ÇEKME ---
@@ -1528,7 +1412,6 @@ elif sayfa == SAYFA_ADMIN:
             if st.button("Duyuruyu Güncelle"):
                 cursor.execute("UPDATE hoca_profil SET canli_duyuru=? WHERE id=1", (yeni_duyuru,))
                 conn.commit()
-                kalici_yedek_kaydet()
                 st.success("✅ Klinik duyurusu başarıyla güncellendi!")
                 time.sleep(0.1)
                 st.rerun()
@@ -1551,7 +1434,6 @@ elif sayfa == SAYFA_ADMIN:
                 for s, d in yeni_m.items(): 
                     cursor.execute("INSERT INTO mesai (tarih, saat, durum) VALUES (?,?,?)", (str(sec_tar), s, 1 if d else 0))
                 conn.commit(); conn.close()
-                kalici_yedek_kaydet()
                 st.success(f"✅ {format_tarih(str(sec_tar))} tarihi için mesai saatleri kaydedildi!")
                 time.sleep(0.1)
                 st.rerun()
@@ -1588,19 +1470,16 @@ elif sayfa == SAYFA_ADMIN:
                                 if ev_id and str(ev_id).startswith("HATA"):
                                     cursor.execute("UPDATE randevular SET durum='Onaylandı', event_id=NULL WHERE id=?", (tid,))
                                     conn.commit()
-                                    kalici_yedek_kaydet()
                                     st.warning(f"Randevu onaylandı, ancak Google Takvim'e eklenemedi: {ev_id}")
                                 else:
                                     cursor.execute("UPDATE randevular SET durum='Onaylandı', event_id=? WHERE id=?", (ev_id, tid))
                                     conn.commit()
-                                    kalici_yedek_kaydet()
                                     st.success("✅ Onaylandı!")
                                 time.sleep(0.1); st.rerun()
                                 
                             if c2.button("İptal", key=f"ip_{tid}"):
                                 cursor.execute("UPDATE randevular SET durum='İptal Edildi' WHERE id=?", (tid,))
                                 conn.commit()
-                                kalici_yedek_kaydet()
                                 st.warning("❌ İptal Edildi."); time.sleep(0.1); st.rerun()
                                 
                         elif btn_tur == "onaylanan":
@@ -1608,14 +1487,12 @@ elif sayfa == SAYFA_ADMIN:
                                 if evid and not str(evid).startswith("HATA"): takvimden_sil(evid)
                                 cursor.execute("UPDATE randevular SET durum='İptal Edildi' WHERE id=?", (tid,))
                                 conn.commit()
-                                kalici_yedek_kaydet()
                                 st.warning("❌ İptal Edildi."); time.sleep(0.1); st.rerun()
                                 
                         elif btn_tur == "iptal":
                             if st.button("🗑️ Tamamen Sil", key=f"sil_{tid}"):
                                 cursor.execute("DELETE FROM randevular WHERE id=?", (tid,))
                                 conn.commit()
-                                kalici_yedek_kaydet()
                                 st.error("🗑️ Kayıt silindi."); time.sleep(0.1); st.rerun()
 
             with col_bekleyen:
@@ -1645,7 +1522,6 @@ elif sayfa == SAYFA_ADMIN:
                 if st.form_submit_button("Hizmeti Sisteme Ekle"): 
                     cursor.execute("INSERT INTO hizmetler (ad, fiyat, sure) VALUES (?,?,?)", (nad, nfiyat, nsure))
                     conn.commit()
-                    kalici_yedek_kaydet()
                     st.success(f"✅ '{nad}' hizmeti {nsure} dk süre ve {nfiyat} ₺ fiyatla eklendi!")
                     time.sleep(0.1)
                     st.rerun()
@@ -1666,14 +1542,12 @@ elif sayfa == SAYFA_ADMIN:
                         if c1.form_submit_button("Değişiklikleri Kaydet"):
                             cursor.execute("UPDATE hizmetler SET ad=?, fiyat=?, sure=? WHERE id=?", (u_ad, u_fiyat, u_sure, hid))
                             conn.commit()
-                            kalici_yedek_kaydet()
                             st.success(f"✅ {u_ad} güncellendi!")
                             time.sleep(0.1)
                             st.rerun()
                         if c2.form_submit_button("🗑️ Hizmeti Tamamen Sil", type="primary"):
                             cursor.execute("DELETE FROM hizmetler WHERE id=?", (hid,))
                             conn.commit()
-                            kalici_yedek_kaydet()
                             st.error(f"🗑️ {had} hizmeti sistemden silindi.")
                             time.sleep(0.1)
                             st.rerun()
@@ -1700,27 +1574,6 @@ elif sayfa == SAYFA_ADMIN:
                     else:
                         st.error(f"Takvim bağlantısı yok ya da yetki hatası var: {durum['error']}")
                 st.caption("Yeni Gmail'e geçmek için önce tokeni sıfırlayıp sonra takvimi yeniden yetkilendirin.")
-                st.markdown("</div>", unsafe_allow_html=True)
-
-            with st.container():
-                st.markdown('<div class="admin-card">', unsafe_allow_html=True)
-                st.markdown("**Kalıcı Veri Yedeği**")
-                if kalici_yedek_aktif_mi():
-                    st.success("Google Drive yedeği açık. Randevular, hizmetler, profil ve görseller Drive'a yedeklenir.")
-                    if st.session_state.get("_kalici_yedek_son"):
-                        st.caption(f"Son yedek: {st.session_state['_kalici_yedek_son']}")
-                    elif st.session_state.get("_kalici_yedek_durum"):
-                        st.caption(st.session_state["_kalici_yedek_durum"])
-                    if st.session_state.get("_kalici_yedek_hata"):
-                        st.warning(f"Son yedek uyarısı: {st.session_state['_kalici_yedek_hata']}")
-                    if st.button("Şimdi Yedekle"):
-                        sonuc = kalici_yedek_kaydet()
-                        if sonuc["ok"]:
-                            st.success("Kalıcı yedek başarıyla güncellendi.")
-                        else:
-                            st.error(f"Yedek alınamadı: {sonuc.get('error', sonuc.get('status'))}")
-                else:
-                    st.warning("Google Drive yedeği kapalı. Canlı kullanım için Streamlit Secrets içine ENABLE_GOOGLE_DRIVE_BACKUP = true eklenmeli.")
                 st.markdown("</div>", unsafe_allow_html=True)
 
             with st.container():
@@ -1780,7 +1633,6 @@ elif sayfa == SAYFA_ADMIN:
                     conn = db_baglan(); cursor = conn.cursor()
                     cursor.execute("UPDATE hoca_profil SET unvan=?, ofis=?, tel=?, email=?, profile_img=?, banner_img=?, logo_img=?, yasal_metin=?, harita_url=? WHERE id=1", (u_unvan, u_ofis, u_tel, u_mail, pi, bi, li, u_yas, u_har))
                     conn.commit(); conn.close()
-                    kalici_yedek_kaydet()
                     st.success("✅ Tüm profil bilgileri ve görseller başarıyla güncellendi!")
                     time.sleep(0.1)
                     st.rerun()
