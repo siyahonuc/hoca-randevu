@@ -447,6 +447,11 @@ st.markdown("""
         border-right: 1px solid #e7edf1;
         box-shadow: none;
     }
+    section[data-testid="stSidebar"],
+    [data-testid="collapsedControl"] {
+        display: none !important;
+        visibility: hidden !important;
+    }
     .sidebar-brand {
         padding: 12px 10px 16px;
         text-align: center;
@@ -464,6 +469,97 @@ st.markdown("""
     }
     .top-mobile-logo {
         display: none;
+    }
+    .mobile-profile-strip {
+        display: none;
+    }
+    .clinic-identity-card {
+        display: grid;
+        grid-template-columns: 178px minmax(0, 1fr);
+        gap: 26px;
+        align-items: center;
+        margin: 22px 0 24px;
+        padding: 26px;
+        border: 1px solid #e2e8ee;
+        border-radius: 8px;
+        background:
+            linear-gradient(90deg, rgba(11,122,117,0.08) 0 5px, transparent 5px),
+            linear-gradient(135deg, #f8fbfa 0%, #ffffff 58%, #fff9ed 100%);
+        overflow: hidden;
+    }
+    .clinic-identity-media {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+    }
+    .clinic-portrait-lg {
+        width: 144px;
+        height: 144px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 5px solid #ffffff;
+        box-shadow: 0 14px 28px rgba(18,48,74,0.14);
+        background: #eef5f4;
+    }
+    .clinic-portrait-placeholder {
+        width: 144px;
+        height: 144px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 5px solid #ffffff;
+        background: #eef8f6;
+        color: #0b7a75 !important;
+        font-weight: 900;
+        font-size: 2.2rem;
+        box-shadow: 0 14px 28px rgba(18,48,74,0.14);
+    }
+    .clinic-hero-logo img {
+        max-width: 150px;
+        max-height: 54px;
+        object-fit: contain;
+        display: block;
+    }
+    .clinic-identity-kicker {
+        color: #0b7a75 !important;
+        font-size: 0.78rem;
+        font-weight: 850;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+    }
+    .clinic-identity-name {
+        color: #12304a !important;
+        font-size: clamp(1.8rem, 3.6vw, 2.7rem);
+        line-height: 1.08;
+        font-weight: 900;
+        margin: 0 0 10px;
+    }
+    .clinic-identity-copy {
+        color: #516173 !important;
+        font-size: 1rem;
+        line-height: 1.55;
+        margin: 0 0 18px;
+        max-width: 700px;
+    }
+    .clinic-contact-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .clinic-contact-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border: 1px solid #dbe7eb;
+        border-radius: 999px;
+        background: rgba(255,255,255,0.75);
+        color: #334155 !important;
+        font-weight: 700;
+        font-size: 0.9rem;
+        text-decoration: none;
     }
     .profile-card {
         box-shadow: none;
@@ -626,6 +722,37 @@ st.markdown("""
             height: auto;
             object-fit: contain;
         }
+        .mobile-profile-strip {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            margin: 10px 0 16px;
+            border: 1px solid #e2e8ee;
+            border-radius: 8px;
+            background: #fbfcfd;
+        }
+        .mobile-profile-strip img {
+            width: 68px;
+            height: 68px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #ffffff;
+            box-shadow: 0 8px 18px rgba(18,48,74,0.12);
+            flex: 0 0 auto;
+        }
+        .mobile-profile-name {
+            color: #12304a !important;
+            font-weight: 850;
+            line-height: 1.25;
+            font-size: 0.98rem;
+        }
+        .mobile-profile-meta {
+            color: #64748b !important;
+            font-size: 0.88rem;
+            margin-top: 4px;
+            line-height: 1.35;
+        }
         .block-container {
             padding-left: 1rem;
             padding-right: 1rem;
@@ -648,6 +775,29 @@ st.markdown("""
         }
         .custom-banner {
             height: 190px;
+        }
+        .clinic-identity-card {
+            grid-template-columns: 1fr;
+            gap: 18px;
+            padding: 20px 16px;
+            margin-top: 18px;
+            text-align: center;
+        }
+        .clinic-portrait-lg,
+        .clinic-portrait-placeholder {
+            width: 118px;
+            height: 118px;
+        }
+        .clinic-portrait-placeholder {
+            font-size: 1.8rem;
+        }
+        .clinic-contact-row {
+            justify-content: center;
+        }
+        .clinic-contact-chip {
+            width: 100%;
+            justify-content: center;
+            border-radius: 8px;
         }
         .slot-heading {
             display: block;
@@ -1006,18 +1156,7 @@ SAYFA_RANDEVU = "📅 Randevu Al"
 SAYFA_ADMIN = "Yönetim"
 SAYFA_SECENEKLERI = [SAYFA_RANDEVU, SAYFA_ADMIN]
 
-# --- 5. SIDEBAR ---
-with st.sidebar:
-    if gorunen_logo:
-        st.markdown(f'<div class="sidebar-brand sidebar-logo"><img src="{get_image_data_uri(gorunen_logo, max_width=520)}"></div>', unsafe_allow_html=True)
-    if gorunen_p_img:
-        st.markdown(f'<div class="profile-img-container"><img src="{get_image_data_uri(gorunen_p_img, max_width=360)}"></div>', unsafe_allow_html=True)
-
-    st.markdown(f"""<div class="profile-card"><h4>{p_unvan_html}</h4><hr><div style="text-align:left; font-size:0.9em; color:#4a5568;"><p>📍 {p_ofis_html}</p><p>📞 {p_tel_html}</p><p>✉️ {p_email_html}</p></div></div>""", unsafe_allow_html=True)
-
-if gorunen_logo:
-    st.markdown(f'<div class="top-mobile-logo"><img src="{get_image_data_uri(gorunen_logo, max_width=520)}"></div>', unsafe_allow_html=True)
-
+# --- 5. ANA NAVİGASYON ---
 sayfa = st.radio("İşlem Seçiniz", SAYFA_SECENEKLERI, horizontal=True)
 
 if 'randevu_adimi' not in st.session_state:
@@ -1051,8 +1190,32 @@ if sayfa == SAYFA_RANDEVU:
             time.sleep(0.35)
         splash.empty()
 
-    if gorunen_banner:
-        st.markdown(f'<div class="custom-banner"><img src="{get_image_data_uri(gorunen_banner, max_width=1400)}"></div>', unsafe_allow_html=True)
+    profil_src = get_image_data_uri(gorunen_p_img, max_width=420) if gorunen_p_img else ""
+    logo_src = get_image_data_uri(gorunen_logo, max_width=420) if gorunen_logo else ""
+    profil_html = (
+        f'<img class="clinic-portrait-lg" src="{profil_src}" alt="Hoca profil resmi">'
+        if profil_src
+        else '<div class="clinic-portrait-placeholder">OP</div>'
+    )
+    logo_html = f'<div class="clinic-hero-logo"><img src="{logo_src}" alt="Klinik logosu"></div>' if logo_src else ""
+    st.markdown(f"""
+    <section class="clinic-identity-card">
+        <div class="clinic-identity-media">
+            {profil_html}
+            {logo_html}
+        </div>
+        <div>
+            <div class="clinic-identity-kicker">Online Randevu</div>
+            <h1 class="clinic-identity-name">{p_unvan_html}</h1>
+            <p class="clinic-identity-copy">Uygun tarih ve saati seçerek randevu talebinizi güvenli şekilde iletebilirsiniz.</p>
+            <div class="clinic-contact-row">
+                <span class="clinic-contact-chip">📍 {p_ofis_html}</span>
+                <a class="clinic-contact-chip" href="tel:{p_tel_href}">📞 {p_tel_html}</a>
+                <a class="clinic-contact-chip" href="mailto:{p_email_href}">✉️ {p_email_html}</a>
+            </div>
+        </div>
+    </section>
+    """, unsafe_allow_html=True)
     
     if p_duyuru and p_duyuru.strip() != "":
         st.markdown(f'<div class="announcement-box">📢 Klinik Duyurusu: {guvenli_metin(p_duyuru)}</div>', unsafe_allow_html=True)
