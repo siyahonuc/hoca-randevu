@@ -1198,24 +1198,23 @@ if sayfa == SAYFA_RANDEVU:
         else '<div class="clinic-portrait-placeholder">OP</div>'
     )
     logo_html = f'<div class="clinic-hero-logo"><img src="{logo_src}" alt="Klinik logosu"></div>' if logo_src else ""
-    st.markdown(f"""
-    <section class="clinic-identity-card">
-        <div class="clinic-identity-media">
-            {profil_html}
-            {logo_html}
-        </div>
-        <div>
-            <div class="clinic-identity-kicker">Online Randevu</div>
-            <h1 class="clinic-identity-name">{p_unvan_html}</h1>
-            <p class="clinic-identity-copy">Uygun tarih ve saati seçerek randevu talebinizi güvenli şekilde iletebilirsiniz.</p>
-            <div class="clinic-contact-row">
-                <span class="clinic-contact-chip">📍 {p_ofis_html}</span>
-                <a class="clinic-contact-chip" href="tel:{p_tel_href}">📞 {p_tel_html}</a>
-                <a class="clinic-contact-chip" href="mailto:{p_email_href}">✉️ {p_email_html}</a>
-            </div>
-        </div>
-    </section>
-    """, unsafe_allow_html=True)
+    kimlik_karti_html = f"""<section class="clinic-identity-card">
+<div class="clinic-identity-media">
+{profil_html}
+{logo_html}
+</div>
+<div>
+<div class="clinic-identity-kicker">Online Randevu</div>
+<h1 class="clinic-identity-name">{p_unvan_html}</h1>
+<p class="clinic-identity-copy">Uygun tarih ve saati seçerek randevu talebinizi güvenli şekilde iletebilirsiniz.</p>
+<div class="clinic-contact-row">
+<span class="clinic-contact-chip">📍 {p_ofis_html}</span>
+<a class="clinic-contact-chip" href="tel:{p_tel_href}">📞 {p_tel_html}</a>
+<a class="clinic-contact-chip" href="mailto:{p_email_href}">✉️ {p_email_html}</a>
+</div>
+</div>
+</section>"""
+    st.markdown(kimlik_karti_html, unsafe_allow_html=True)
     
     if p_duyuru and p_duyuru.strip() != "":
         st.markdown(f'<div class="announcement-box">📢 Klinik Duyurusu: {guvenli_metin(p_duyuru)}</div>', unsafe_allow_html=True)
