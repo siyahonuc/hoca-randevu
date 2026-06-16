@@ -25,6 +25,12 @@ except ImportError:
 # --- 1. TASARIM VE CSS ---
 st.set_page_config(page_title="Doç. Dr. Ömer Osman PALA | Klinik", layout="wide", page_icon="👨‍⚕️")
 
+try:
+    if str(st.query_params.get("embed", "")).lower() != "true":
+        st.query_params["embed"] = "true"
+except Exception:
+    pass
+
 BASE_DIR = Path(__file__).resolve().parent
 UPLOAD_DIR = Path(os.getenv("UPLOAD_DIR") or (BASE_DIR / "uploads"))
 DB_PATH = Path(os.getenv("DB_PATH") or (BASE_DIR / "randevu_sistemi.db"))
