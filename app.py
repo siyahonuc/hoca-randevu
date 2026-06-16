@@ -31,6 +31,7 @@ TOKEN_PATH = BASE_DIR / "token.json"
 CREDENTIALS_PATH = BASE_DIR / "credentials.json"
 ASSET_DIR = BASE_DIR / "assets"
 KVKK_PDF_PATH = ASSET_DIR / "kvkk_aydinlatma_metni.pdf"
+KVKK_ROOT_PDF_PATH = BASE_DIR / "kvkk_aydinlatma_metni.pdf"
 GOOGLE_CALENDAR_SCOPE = 'https://www.googleapis.com/auth/calendar'
 CALENDAR_SCOPES = [GOOGLE_CALENDAR_SCOPE]
 
@@ -934,6 +935,20 @@ def get_file_data_uri(file_path, mime):
         return ""
     return file_data_uri_cached(str(path), path.stat().st_mtime, mime)
 
+@st.cache_data(show_spinner=False)
+def file_bytes_cached(path_str, mtime):
+    path = Path(path_str)
+    try:
+        return path.read_bytes()
+    except Exception:
+        return b""
+
+def get_file_bytes(file_path):
+    path = Path(file_path)
+    if not path.exists():
+        return b""
+    return file_bytes_cached(str(path), path.stat().st_mtime)
+
 def ilk_var_olan_yol(*paths):
     for path in paths:
         if path and local_path(path).exists():
@@ -1178,7 +1193,8 @@ p_email_html = guvenli_metin(p_email)
 p_tel_href = guvenli_tel_href(p_tel)
 p_email_href = html.escape(str(p_email or ""), quote=True)
 p_yasal_html = guvenli_metin(p_yasal)
-kvkk_pdf_uri = get_file_data_uri(KVKK_PDF_PATH, "application/pdf")
+kvkk_pdf_uri = get_file_data_uri(KVKK_PDF_PATH, "application/pdf") or get_file_data_uri(KVKK_ROOT_PDF_PATH, "application/pdf")
+kvkk_pdf_bytes = get_file_bytes(KVKK_PDF_PATH) or get_file_bytes(KVKK_ROOT_PDF_PATH)
 gorunen_p_img = ilk_var_olan_yol(p_img, "uploads/profile_1363.jpg", "uploads/profile_Gemini_Generated_Image_c7k0akc7k0akc7k0.png")
 gorunen_banner = ilk_var_olan_yol(p_banner, "uploads/banner_1363 (1).jpg", "uploads/banner_Gemini_Generated_Image_c7k0akc7k0akc7k0.png")
 gorunen_logo = ilk_var_olan_yol(p_logo)
@@ -1343,12 +1359,22 @@ if sayfa == SAYFA_RANDEVU:
                 </div>
                 """, unsafe_allow_html=True)
                 
+                if kvkk_pdf_bytes:
+                    st.download_button(
+                        "📄 KVKK Aydınlatma Metni (PDF)",
+                        data=kvkk_pdf_bytes,
+                        file_name="kvkk_aydinlatma_metni.pdf",
+                        mime="application/pdf",
+                        use_container_width=True,
+                        key="kvkk_pdf_onay_adimi",
+                    )
+                elif kvkk_pdf_uri:
+                    st.markdown(
+                        f'<a href="{kvkk_pdf_uri}" target="_blank" class="footer-btn">📄 KVKK Aydınlatma Metni (PDF)</a>',
+                        unsafe_allow_html=True,
+                    )
+
                 with st.form("onay_form", border=False):
-                    if kvkk_pdf_uri:
-                        st.markdown(
-                            f'<a href="{kvkk_pdf_uri}" target="_blank" class="footer-btn">📄 KVKK Aydınlatma Metni (PDF)</a>',
-                            unsafe_allow_html=True,
-                        )
                     onay_1 = st.checkbox(f"Randevunuza gidemeyecekseniz, en geç randevu gününden bir önceki gün {p_tel} numarası üzerinden iptal edebilirsiniz. *")
                     onay_2 = st.checkbox("Öğretim üyesinden alınan her bir seans için ücretin döner sermaye hesabına yatırılması gerekmektedir. *")
                     onay_kvkk = st.checkbox("KVKK Aydınlatma Metni’ni okudum, anladım ve randevu süreci kapsamında bilgilendirildiğimi kabul ediyorum. *")
@@ -1393,6 +1419,15 @@ if sayfa == SAYFA_RANDEVU:
     )
 
     st.markdown(f"""<div class="footer-container"><h4>{p_unvan_html}</h4><a href="tel:{p_tel_href}" class="footer-btn">📞 Ara</a><a href="mailto:{p_email_href}" class="footer-btn">✉️ E-Posta</a><br><br><h4>Yasal</h4>{kvkk_footer_html}<br><br><h4>Konum</h4>{harita_html}</div>""", unsafe_allow_html=True)
+    if kvkk_pdf_bytes:
+        st.download_button(
+            "📄 KVKK Aydınlatma Metni PDF'i Aç / İndir",
+            data=kvkk_pdf_bytes,
+            file_name="kvkk_aydinlatma_metni.pdf",
+            mime="application/pdf",
+            use_container_width=True,
+            key="kvkk_pdf_alt_buton",
+        )
 
 # --- 7. HOCA PANELİ ---
 elif sayfa == SAYFA_ADMIN:
