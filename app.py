@@ -1,5 +1,4 @@
 import streamlit as st
-import streamlit.components.v1 as components
 import sqlite3
 import os
 import datetime
@@ -24,12 +23,6 @@ except ImportError:
 
 # --- 1. TASARIM VE CSS ---
 st.set_page_config(page_title="Doç. Dr. Ömer Osman PALA | Klinik", layout="wide", page_icon="👨‍⚕️")
-
-try:
-    if str(st.query_params.get("embed", "")).lower() != "true":
-        st.query_params["embed"] = "true"
-except Exception:
-    pass
 
 BASE_DIR = Path(__file__).resolve().parent
 UPLOAD_DIR = Path(os.getenv("UPLOAD_DIR") or (BASE_DIR / "uploads"))
@@ -68,66 +61,16 @@ st.markdown("""
     [class*="ViewerBadge"],
     [class*="stAppDeployButton"],
     [class*="viewerBadge_container"],
-    [class*="viewerBadge_link"],
-    [class*="viewerBadge_text"],
-    [class*="viewerBadgeIcon"],
-    [class*="st-emotion-cache"][href*="streamlit.io"],
     [class*="stStatusWidget"],
-    [aria-label*="Streamlit"],
-    [title*="Streamlit"],
-    [title*="Manage app"],
-    [aria-label*="Manage app"],
-    button[title*="Manage app"],
-    button[aria-label*="Manage app"],
     div:has(> a[href*="streamlit.io"]),
-    div:has(a[href*="streamlit.io"]),
-    div:has(button[title*="Manage app"]),
     iframe[src*="streamlit.io"],
     iframe[title*="Streamlit"],
-    iframe[title*="streamlit"],
-    a[href*="share.streamlit.io"],
     a[href*="streamlit.io/cloud"],
     a[href*="streamlit.io"],
-    a[target="_blank"][href*="streamlit"],
     div[style*="position: fixed"][style*="bottom"][style*="right"] {
         display: none !important;
         visibility: hidden !important;
         pointer-events: none !important;
-    }
-    body::after,
-    .streamlit-cloud-shield {
-        content: "";
-        position: fixed !important;
-        right: 0 !important;
-        bottom: 0 !important;
-        width: 280px !important;
-        height: 118px !important;
-        background: linear-gradient(180deg, rgba(255,255,255,0.92), #ffffff 34%, #ffffff 100%) !important;
-        z-index: 2147483647 !important;
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        pointer-events: auto !important;
-        box-shadow: -12px -12px 24px rgba(255,255,255,0.96) !important;
-    }
-    .streamlit-cloud-shield {
-        border: 0 !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-    @media (max-width: 760px) {
-        body::after,
-        .streamlit-cloud-shield {
-            left: 0 !important;
-            right: 0 !important;
-            bottom: 0 !important;
-            width: 100vw !important;
-            height: 124px !important;
-            box-shadow: 0 -18px 30px rgba(255,255,255,0.96) !important;
-        }
-        .block-container {
-            padding-bottom: 150px !important;
-        }
     }
     .block-container {
         max-width: 1160px;
@@ -871,138 +814,6 @@ st.markdown("""
     }
     </style>
     """, unsafe_allow_html=True)
-
-st.markdown('<div class="streamlit-cloud-shield" aria-hidden="true"></div>', unsafe_allow_html=True)
-
-components.html(
-    """
-    <script>
-    (function () {
-        const selectors = [
-            '#MainMenu',
-            'footer',
-            '[data-testid="stToolbar"]',
-            '[data-testid="stDecoration"]',
-            '[data-testid="stStatusWidget"]',
-            '[data-testid="stDeployButton"]',
-            '[data-testid="manage-app-button"]',
-            '[class*="viewerBadge"]',
-            '[class*="ViewerBadge"]',
-            '[title*="Manage app"]',
-            '[aria-label*="Manage app"]',
-            'a[href*="streamlit.io"]',
-            'a[href*="share.streamlit.io"]',
-            'iframe[src*="streamlit.io"]'
-        ];
-
-        function hideElement(el) {
-            if (!el || el.dataset.clinicHidden === '1') return;
-            el.dataset.clinicHidden = '1';
-            el.style.setProperty('display', 'none', 'important');
-            el.style.setProperty('visibility', 'hidden', 'important');
-            el.style.setProperty('pointer-events', 'none', 'important');
-            el.style.setProperty('opacity', '0', 'important');
-            el.style.setProperty('width', '0', 'important');
-            el.style.setProperty('height', '0', 'important');
-            el.style.setProperty('overflow', 'hidden', 'important');
-        }
-
-        function smallNode(el) {
-            const text = (el.innerText || '').trim();
-            const rect = el.getBoundingClientRect ? el.getBoundingClientRect() : { width: 0, height: 0 };
-            return text.length < 160 && rect.width < 360 && rect.height < 140;
-        }
-
-        function ensureMobileShield(doc) {
-            const isMobile = Math.min(window.parent.innerWidth || window.innerWidth, window.innerWidth || 9999) <= 760;
-            if (!isMobile || !doc || !doc.body) return;
-            let shield = doc.getElementById('clinic-streamlit-mobile-shield');
-            if (!shield) {
-                shield = doc.createElement('div');
-                shield.id = 'clinic-streamlit-mobile-shield';
-                shield.setAttribute('aria-hidden', 'true');
-                doc.body.appendChild(shield);
-            }
-            const styles = {
-                position: 'fixed',
-                left: '0',
-                right: '0',
-                bottom: '0',
-                width: '100vw',
-                height: '124px',
-                background: 'linear-gradient(180deg, rgba(255,255,255,0.92), #ffffff 34%, #ffffff 100%)',
-                zIndex: '2147483647',
-                display: 'block',
-                visibility: 'visible',
-                opacity: '1',
-                pointerEvents: 'auto',
-                boxShadow: '0 -18px 30px rgba(255,255,255,0.96)',
-                border: '0',
-                margin: '0',
-                padding: '0'
-            };
-            Object.entries(styles).forEach(([key, value]) => shield.style.setProperty(key, value, 'important'));
-        }
-
-        function cleanBadges() {
-            let doc;
-            try {
-                doc = window.parent.document;
-            } catch (err) {
-                doc = document;
-            }
-
-            try {
-                const url = new URL(window.parent.location.href);
-                if (url.hostname.includes('streamlit.app') && url.searchParams.get('embed') !== 'true') {
-                    url.searchParams.set('embed', 'true');
-                    window.parent.history.replaceState({}, '', url.toString());
-                }
-            } catch (err) {}
-
-            ensureMobileShield(doc);
-
-            selectors.forEach((selector) => {
-                doc.querySelectorAll(selector).forEach((el) => {
-                    hideElement(el);
-                    if (el.parentElement && smallNode(el.parentElement)) hideElement(el.parentElement);
-                });
-            });
-
-            doc.querySelectorAll('a, button, div, span').forEach((el) => {
-                const text = (el.innerText || '').trim();
-                const href = (el.getAttribute && (el.getAttribute('href') || '')) || '';
-                const title = (el.getAttribute && (el.getAttribute('title') || '')) || '';
-                const aria = (el.getAttribute && (el.getAttribute('aria-label') || '')) || '';
-                const looksLikeBadge =
-                    href.includes('streamlit.io') ||
-                    title.includes('Manage app') ||
-                    aria.includes('Manage app') ||
-                    text.includes('Hosted with Streamlit') ||
-                    text.includes('Created by') ||
-                    text.includes('Manage app');
-
-                if (looksLikeBadge && smallNode(el)) {
-                    hideElement(el);
-                    if (el.parentElement && smallNode(el.parentElement)) hideElement(el.parentElement);
-                }
-            });
-        }
-
-        cleanBadges();
-        setInterval(cleanBadges, 350);
-        try {
-            new MutationObserver(cleanBadges).observe(window.parent.document.body, {
-                childList: true,
-                subtree: true
-            });
-        } catch (err) {}
-    })();
-    </script>
-    """,
-    height=0,
-    width=0,
-)
 
 # --- YARDIMCI FONKSİYONLAR ---
 def db_baglan():
