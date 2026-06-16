@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import sqlite3
 import os
 import datetime
@@ -61,12 +62,27 @@ st.markdown("""
     [class*="ViewerBadge"],
     [class*="stAppDeployButton"],
     [class*="viewerBadge_container"],
+    [class*="viewerBadge_link"],
+    [class*="viewerBadge_text"],
+    [class*="viewerBadgeIcon"],
+    [class*="st-emotion-cache"][href*="streamlit.io"],
     [class*="stStatusWidget"],
+    [aria-label*="Streamlit"],
+    [title*="Streamlit"],
+    [title*="Manage app"],
+    [aria-label*="Manage app"],
+    button[title*="Manage app"],
+    button[aria-label*="Manage app"],
     div:has(> a[href*="streamlit.io"]),
+    div:has(a[href*="streamlit.io"]),
+    div:has(button[title*="Manage app"]),
     iframe[src*="streamlit.io"],
     iframe[title*="Streamlit"],
+    iframe[title*="streamlit"],
+    a[href*="share.streamlit.io"],
     a[href*="streamlit.io/cloud"],
     a[href*="streamlit.io"],
+    a[target="_blank"][href*="streamlit"],
     div[style*="position: fixed"][style*="bottom"][style*="right"] {
         display: none !important;
         visibility: hidden !important;
@@ -814,6 +830,95 @@ st.markdown("""
     }
     </style>
     """, unsafe_allow_html=True)
+
+components.html(
+    """
+    <script>
+    (function () {
+        const selectors = [
+            '#MainMenu',
+            'footer',
+            '[data-testid="stToolbar"]',
+            '[data-testid="stDecoration"]',
+            '[data-testid="stStatusWidget"]',
+            '[data-testid="stDeployButton"]',
+            '[data-testid="manage-app-button"]',
+            '[class*="viewerBadge"]',
+            '[class*="ViewerBadge"]',
+            '[title*="Manage app"]',
+            '[aria-label*="Manage app"]',
+            'a[href*="streamlit.io"]',
+            'a[href*="share.streamlit.io"]',
+            'iframe[src*="streamlit.io"]'
+        ];
+
+        function hideElement(el) {
+            if (!el || el.dataset.clinicHidden === '1') return;
+            el.dataset.clinicHidden = '1';
+            el.style.setProperty('display', 'none', 'important');
+            el.style.setProperty('visibility', 'hidden', 'important');
+            el.style.setProperty('pointer-events', 'none', 'important');
+            el.style.setProperty('opacity', '0', 'important');
+            el.style.setProperty('width', '0', 'important');
+            el.style.setProperty('height', '0', 'important');
+            el.style.setProperty('overflow', 'hidden', 'important');
+        }
+
+        function smallNode(el) {
+            const text = (el.innerText || '').trim();
+            const rect = el.getBoundingClientRect ? el.getBoundingClientRect() : { width: 0, height: 0 };
+            return text.length < 160 && rect.width < 360 && rect.height < 140;
+        }
+
+        function cleanBadges() {
+            let doc;
+            try {
+                doc = window.parent.document;
+            } catch (err) {
+                doc = document;
+            }
+
+            selectors.forEach((selector) => {
+                doc.querySelectorAll(selector).forEach((el) => {
+                    hideElement(el);
+                    if (el.parentElement && smallNode(el.parentElement)) hideElement(el.parentElement);
+                });
+            });
+
+            doc.querySelectorAll('a, button, div, span').forEach((el) => {
+                const text = (el.innerText || '').trim();
+                const href = (el.getAttribute && (el.getAttribute('href') || '')) || '';
+                const title = (el.getAttribute && (el.getAttribute('title') || '')) || '';
+                const aria = (el.getAttribute && (el.getAttribute('aria-label') || '')) || '';
+                const looksLikeBadge =
+                    href.includes('streamlit.io') ||
+                    title.includes('Manage app') ||
+                    aria.includes('Manage app') ||
+                    text.includes('Hosted with Streamlit') ||
+                    text.includes('Created by') ||
+                    text.includes('Manage app');
+
+                if (looksLikeBadge && smallNode(el)) {
+                    hideElement(el);
+                    if (el.parentElement && smallNode(el.parentElement)) hideElement(el.parentElement);
+                }
+            });
+        }
+
+        cleanBadges();
+        setInterval(cleanBadges, 350);
+        try {
+            new MutationObserver(cleanBadges).observe(window.parent.document.body, {
+                childList: true,
+                subtree: true
+            });
+        } catch (err) {}
+    })();
+    </script>
+    """,
+    height=0,
+    width=0,
+)
 
 # --- YARDIMCI FONKSİYONLAR ---
 def db_baglan():
