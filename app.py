@@ -100,9 +100,9 @@ st.markdown("""
         position: fixed !important;
         right: 0 !important;
         bottom: 0 !important;
-        width: 230px !important;
-        height: 92px !important;
-        background: #ffffff !important;
+        width: 280px !important;
+        height: 118px !important;
+        background: linear-gradient(180deg, rgba(255,255,255,0.92), #ffffff 34%, #ffffff 100%) !important;
         z-index: 2147483647 !important;
         display: block !important;
         visibility: visible !important;
@@ -114,6 +114,20 @@ st.markdown("""
         border: 0 !important;
         margin: 0 !important;
         padding: 0 !important;
+    }
+    @media (max-width: 760px) {
+        body::after,
+        .streamlit-cloud-shield {
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100vw !important;
+            height: 124px !important;
+            box-shadow: 0 -18px 30px rgba(255,255,255,0.96) !important;
+        }
+        .block-container {
+            padding-bottom: 150px !important;
+        }
     }
     .block-container {
         max-width: 1160px;
@@ -899,6 +913,37 @@ components.html(
             return text.length < 160 && rect.width < 360 && rect.height < 140;
         }
 
+        function ensureMobileShield(doc) {
+            const isMobile = Math.min(window.parent.innerWidth || window.innerWidth, window.innerWidth || 9999) <= 760;
+            if (!isMobile || !doc || !doc.body) return;
+            let shield = doc.getElementById('clinic-streamlit-mobile-shield');
+            if (!shield) {
+                shield = doc.createElement('div');
+                shield.id = 'clinic-streamlit-mobile-shield';
+                shield.setAttribute('aria-hidden', 'true');
+                doc.body.appendChild(shield);
+            }
+            const styles = {
+                position: 'fixed',
+                left: '0',
+                right: '0',
+                bottom: '0',
+                width: '100vw',
+                height: '124px',
+                background: 'linear-gradient(180deg, rgba(255,255,255,0.92), #ffffff 34%, #ffffff 100%)',
+                zIndex: '2147483647',
+                display: 'block',
+                visibility: 'visible',
+                opacity: '1',
+                pointerEvents: 'auto',
+                boxShadow: '0 -18px 30px rgba(255,255,255,0.96)',
+                border: '0',
+                margin: '0',
+                padding: '0'
+            };
+            Object.entries(styles).forEach(([key, value]) => shield.style.setProperty(key, value, 'important'));
+        }
+
         function cleanBadges() {
             let doc;
             try {
@@ -906,6 +951,16 @@ components.html(
             } catch (err) {
                 doc = document;
             }
+
+            try {
+                const url = new URL(window.parent.location.href);
+                if (url.hostname.includes('streamlit.app') && url.searchParams.get('embed') !== 'true') {
+                    url.searchParams.set('embed', 'true');
+                    window.parent.history.replaceState({}, '', url.toString());
+                }
+            } catch (err) {}
+
+            ensureMobileShield(doc);
 
             selectors.forEach((selector) => {
                 doc.querySelectorAll(selector).forEach((el) => {
