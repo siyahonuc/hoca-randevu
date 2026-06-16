@@ -29,6 +29,8 @@ UPLOAD_DIR = Path(os.getenv("UPLOAD_DIR") or (BASE_DIR / "uploads"))
 DB_PATH = Path(os.getenv("DB_PATH") or (BASE_DIR / "randevu_sistemi.db"))
 TOKEN_PATH = BASE_DIR / "token.json"
 CREDENTIALS_PATH = BASE_DIR / "credentials.json"
+ASSET_DIR = BASE_DIR / "assets"
+KVKK_PDF_PATH = ASSET_DIR / "kvkk_aydinlatma_metni.pdf"
 GOOGLE_CALENDAR_SCOPE = 'https://www.googleapis.com/auth/calendar'
 CALENDAR_SCOPES = [GOOGLE_CALENDAR_SCOPE]
 
@@ -918,6 +920,20 @@ def get_image_data_uri(image_path, max_width=1200):
         mime = "image/jpeg" if path.suffix.lower() in [".jpg", ".jpeg"] else "image/png"
         return f"data:{mime};base64,{get_base64_image(image_path)}"
 
+@st.cache_data(show_spinner=False)
+def file_data_uri_cached(path_str, mtime, mime):
+    path = Path(path_str)
+    try:
+        return f"data:{mime};base64,{base64.b64encode(path.read_bytes()).decode()}"
+    except Exception:
+        return ""
+
+def get_file_data_uri(file_path, mime):
+    path = Path(file_path)
+    if not path.exists():
+        return ""
+    return file_data_uri_cached(str(path), path.stat().st_mtime, mime)
+
 def ilk_var_olan_yol(*paths):
     for path in paths:
         if path and local_path(path).exists():
@@ -1162,6 +1178,7 @@ p_email_html = guvenli_metin(p_email)
 p_tel_href = guvenli_tel_href(p_tel)
 p_email_href = html.escape(str(p_email or ""), quote=True)
 p_yasal_html = guvenli_metin(p_yasal)
+kvkk_pdf_uri = get_file_data_uri(KVKK_PDF_PATH, "application/pdf")
 gorunen_p_img = ilk_var_olan_yol(p_img, "uploads/profile_1363.jpg", "uploads/profile_Gemini_Generated_Image_c7k0akc7k0akc7k0.png")
 gorunen_banner = ilk_var_olan_yol(p_banner, "uploads/banner_1363 (1).jpg", "uploads/banner_Gemini_Generated_Image_c7k0akc7k0akc7k0.png")
 gorunen_logo = ilk_var_olan_yol(p_logo)
@@ -1327,8 +1344,14 @@ if sayfa == SAYFA_RANDEVU:
                 """, unsafe_allow_html=True)
                 
                 with st.form("onay_form", border=False):
+                    if kvkk_pdf_uri:
+                        st.markdown(
+                            f'<a href="{kvkk_pdf_uri}" target="_blank" class="footer-btn">📄 KVKK Aydınlatma Metni (PDF)</a>',
+                            unsafe_allow_html=True,
+                        )
                     onay_1 = st.checkbox(f"Randevunuza gidemeyecekseniz, en geç randevu gününden bir önceki gün {p_tel} numarası üzerinden iptal edebilirsiniz. *")
                     onay_2 = st.checkbox("Öğretim üyesinden alınan her bir seans için ücretin döner sermaye hesabına yatırılması gerekmektedir. *")
+                    onay_kvkk = st.checkbox("KVKK Aydınlatma Metni’ni okudum, anladım ve randevu süreci kapsamında bilgilendirildiğimi kabul ediyorum. *")
                     
                     c_geri, c_onay = st.columns([1, 2])
                     geri_basildi = c_geri.form_submit_button("Geri Dön")
@@ -1342,7 +1365,7 @@ if sayfa == SAYFA_RANDEVU:
                         st.rerun()
                         
                     if onay_basildi:
-                        if onay_1 and onay_2:
+                        if onay_1 and onay_2 and onay_kvkk:
                             kayit_basarili, hata_mesaji = randevu_kaydet(veri)
                             if kayit_basarili:
                                 st.session_state.secilen_saat = None
@@ -1355,7 +1378,7 @@ if sayfa == SAYFA_RANDEVU:
                             else:
                                 st.error(hata_mesaji)
                         else:
-                            st.error("Lütfen randevuyu tamamlamak için koşulları onaylayınız.")
+                            st.error("Lütfen randevuyu tamamlamak için tüm koşulları ve KVKK aydınlatma onayını işaretleyiniz.")
 
     harita_src = guvenli_url(p_harita)
     if harita_src:
@@ -1363,7 +1386,13 @@ if sayfa == SAYFA_RANDEVU:
     else:
         harita_html = '<div style="background:#f1f5f9; padding:20px; border-radius:15px; text-align:center; color:#64748b;">📍 Harita konumu henüz eklenmedi.</div>'
 
-    st.markdown(f"""<div class="footer-container"><h4>{p_unvan_html}</h4><a href="tel:{p_tel_href}" class="footer-btn">📞 Ara</a><a href="mailto:{p_email_href}" class="footer-btn">✉️ E-Posta</a><br><br><h4>Yasal</h4><details><summary>KVKK ve Çerezler</summary><p>{p_yasal_html}</p></details><br><h4>Konum</h4>{harita_html}</div>""", unsafe_allow_html=True)
+    kvkk_footer_html = (
+        f'<a href="{kvkk_pdf_uri}" target="_blank" class="footer-btn">📄 KVKK Aydınlatma Metni (PDF)</a>'
+        if kvkk_pdf_uri
+        else f'<details><summary>KVKK ve Çerezler</summary><p>{p_yasal_html}</p></details>'
+    )
+
+    st.markdown(f"""<div class="footer-container"><h4>{p_unvan_html}</h4><a href="tel:{p_tel_href}" class="footer-btn">📞 Ara</a><a href="mailto:{p_email_href}" class="footer-btn">✉️ E-Posta</a><br><br><h4>Yasal</h4>{kvkk_footer_html}<br><br><h4>Konum</h4>{harita_html}</div>""", unsafe_allow_html=True)
 
 # --- 7. HOCA PANELİ ---
 elif sayfa == SAYFA_ADMIN:
