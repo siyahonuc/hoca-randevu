@@ -32,6 +32,7 @@ CREDENTIALS_PATH = BASE_DIR / "credentials.json"
 ASSET_DIR = BASE_DIR / "assets"
 KVKK_PDF_PATH = ASSET_DIR / "kvkk_aydinlatma_metni.pdf"
 KVKK_ROOT_PDF_PATH = BASE_DIR / "kvkk_aydinlatma_metni.pdf"
+KVKK_UPLOAD_PDF_PATH = UPLOAD_DIR / "kvkk_aydinlatma_metni.pdf"
 GOOGLE_CALENDAR_SCOPE = 'https://www.googleapis.com/auth/calendar'
 CALENDAR_SCOPES = [GOOGLE_CALENDAR_SCOPE]
 
@@ -1193,8 +1194,8 @@ p_email_html = guvenli_metin(p_email)
 p_tel_href = guvenli_tel_href(p_tel)
 p_email_href = html.escape(str(p_email or ""), quote=True)
 p_yasal_html = guvenli_metin(p_yasal)
-kvkk_pdf_uri = get_file_data_uri(KVKK_PDF_PATH, "application/pdf") or get_file_data_uri(KVKK_ROOT_PDF_PATH, "application/pdf")
-kvkk_pdf_bytes = get_file_bytes(KVKK_PDF_PATH) or get_file_bytes(KVKK_ROOT_PDF_PATH)
+kvkk_pdf_uri = get_file_data_uri(KVKK_UPLOAD_PDF_PATH, "application/pdf") or get_file_data_uri(KVKK_ROOT_PDF_PATH, "application/pdf") or get_file_data_uri(KVKK_PDF_PATH, "application/pdf")
+kvkk_pdf_bytes = get_file_bytes(KVKK_UPLOAD_PDF_PATH) or get_file_bytes(KVKK_ROOT_PDF_PATH) or get_file_bytes(KVKK_PDF_PATH)
 gorunen_p_img = ilk_var_olan_yol(p_img, "uploads/profile_1363.jpg", "uploads/profile_Gemini_Generated_Image_c7k0akc7k0akc7k0.png")
 gorunen_banner = ilk_var_olan_yol(p_banner, "uploads/banner_1363 (1).jpg", "uploads/banner_Gemini_Generated_Image_c7k0akc7k0akc7k0.png")
 gorunen_logo = ilk_var_olan_yol(p_logo)
@@ -1671,6 +1672,11 @@ elif sayfa == SAYFA_ADMIN:
                         cropped = img
                     st.session_state.new_p = cropped
                 up_b = st.file_uploader("Banner Resmi", type=["jpg","png"])
+                up_kvkk = st.file_uploader("KVKK Aydınlatma Metni (PDF)", type=["pdf"])
+                if KVKK_UPLOAD_PDF_PATH.exists():
+                    st.caption("Yüklü KVKK PDF'i: hocanın son yüklediği dosya kullanılıyor.")
+                elif KVKK_ROOT_PDF_PATH.exists() or KVKK_PDF_PATH.exists():
+                    st.caption("Yüklü KVKK PDF'i: varsayılan metin kullanılıyor.")
             
             with st.form("prof_form"):
                 u_unvan = st.text_input("Unvan ve İsim", p_unvan); u_ofis = st.text_input("Ofis", p_ofis)
@@ -1693,6 +1699,12 @@ elif sayfa == SAYFA_ADMIN:
                     if up_b:
                         bi = upload_db_yolu(f"b_{int(time.time())}.png")
                         with open(local_path(bi),"wb") as f: f.write(up_b.getbuffer())
+                    if up_kvkk:
+                        kvkk_yeni_pdf = up_kvkk.getvalue()
+                        if not kvkk_yeni_pdf.startswith(b"%PDF"):
+                            st.error("KVKK dosyası geçerli bir PDF gibi görünmüyor. Lütfen PDF dosyası yükleyin.")
+                            st.stop()
+                        KVKK_UPLOAD_PDF_PATH.write_bytes(kvkk_yeni_pdf)
                     
                     conn = db_baglan(); cursor = conn.cursor()
                     cursor.execute("UPDATE hoca_profil SET unvan=?, ofis=?, tel=?, email=?, profile_img=?, banner_img=?, logo_img=?, yasal_metin=?, harita_url=? WHERE id=1", (u_unvan, u_ofis, u_tel, u_mail, pi, bi, li, u_yas, u_har))
