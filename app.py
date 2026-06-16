@@ -88,6 +88,27 @@ st.markdown("""
         visibility: hidden !important;
         pointer-events: none !important;
     }
+    body::after,
+    .streamlit-cloud-shield {
+        content: "";
+        position: fixed !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 230px !important;
+        height: 92px !important;
+        background: #ffffff !important;
+        z-index: 2147483647 !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        box-shadow: -12px -12px 24px rgba(255,255,255,0.96) !important;
+    }
+    .streamlit-cloud-shield {
+        border: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
     .block-container {
         max-width: 1160px;
         padding-top: 2rem;
@@ -830,6 +851,8 @@ st.markdown("""
     }
     </style>
     """, unsafe_allow_html=True)
+
+st.markdown('<div class="streamlit-cloud-shield" aria-hidden="true"></div>', unsafe_allow_html=True)
 
 components.html(
     """
