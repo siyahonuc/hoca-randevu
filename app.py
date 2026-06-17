@@ -812,6 +812,262 @@ st.markdown("""
             margin-top: 4px;
         }
     }
+
+    /* Modern medical direction */
+    :root {
+        --med-bg: #f5f9fd;
+        --med-surface: #ffffff;
+        --med-surface-soft: #eef6ff;
+        --med-primary: #1769aa;
+        --med-primary-dark: #0f3d63;
+        --med-accent: #10a6a0;
+        --med-accent-soft: #dff7f5;
+        --med-ink: #0b2942;
+        --med-muted: #5c7084;
+        --med-line: #d8e6f1;
+        --med-warm: #f7c873;
+    }
+    html, body, .stApp, [data-testid="stAppViewContainer"] {
+        background:
+            linear-gradient(180deg, #ffffff 0%, var(--med-bg) 46%, #ffffff 100%) !important;
+        color: var(--med-ink) !important;
+    }
+    [data-testid="stHeader"] {
+        background: rgba(255,255,255,0.96) !important;
+        border-bottom: 1px solid var(--med-line) !important;
+        box-shadow: 0 4px 18px rgba(15,61,99,0.04);
+    }
+    .block-container {
+        max-width: 1120px;
+        padding-top: 1.4rem;
+        padding-bottom: 4rem;
+    }
+    h1, h2, h3, h4 {
+        color: var(--med-ink) !important;
+    }
+    p, label, .stMarkdown, .stText {
+        color: var(--med-muted) !important;
+    }
+    div[role="radiogroup"] {
+        background: #ffffff;
+        border: 1px solid var(--med-line);
+        border-radius: 12px;
+        padding: 8px 10px;
+        box-shadow: 0 12px 32px rgba(15,61,99,0.06);
+        width: fit-content;
+        margin-bottom: 18px;
+    }
+    div[role="radiogroup"] label {
+        padding: 8px 10px;
+        border-radius: 9px;
+        color: var(--med-ink) !important;
+    }
+    .stButton>button, .stDownloadButton>button {
+        min-height: 44px;
+        border-radius: 10px !important;
+        background: linear-gradient(135deg, var(--med-primary), #1f8dcc) !important;
+        border: 1px solid rgba(23,105,170,0.72) !important;
+        box-shadow: 0 10px 22px rgba(23,105,170,0.18) !important;
+        color: #ffffff !important;
+    }
+    .stButton>button:hover, .stDownloadButton>button:hover {
+        background: linear-gradient(135deg, var(--med-primary-dark), var(--med-primary)) !important;
+        transform: translateY(-1px);
+        box-shadow: 0 14px 28px rgba(23,105,170,0.22) !important;
+    }
+    .stTextInput input, .stTextArea textarea, .stNumberInput input,
+    .stDateInput input, .stSelectbox div[data-baseweb="select"] > div,
+    div[data-baseweb="input"], div[data-baseweb="textarea"],
+    div[data-baseweb="select"] > div, div[data-baseweb="base-input"] {
+        border: 1.6px solid #c9dceb !important;
+        border-radius: 12px !important;
+        background-color: #ffffff !important;
+        box-shadow: 0 8px 22px rgba(15,61,99,0.05) !important;
+    }
+    .stTextInput input:focus, .stTextArea textarea:focus, .stNumberInput input:focus,
+    .stDateInput input:focus {
+        border-color: var(--med-accent) !important;
+        box-shadow: 0 0 0 4px rgba(16,166,160,0.14), 0 8px 22px rgba(15,61,99,0.05) !important;
+    }
+    .splash-screen {
+        background:
+            radial-gradient(circle at 50% 24%, rgba(23,105,170,0.10), transparent 34%),
+            linear-gradient(180deg, #ffffff 0%, #edf6ff 100%);
+    }
+    .splash-mark {
+        color: var(--med-primary) !important;
+        border-color: #cfe3f5;
+        background: #ffffff;
+        box-shadow: 0 20px 48px rgba(23,105,170,0.16);
+    }
+    .splash-title {
+        color: var(--med-ink) !important;
+    }
+    .splash-line {
+        background: #d9e8f5;
+    }
+    .splash-line::after {
+        background: linear-gradient(90deg, var(--med-primary), var(--med-accent));
+    }
+    .splash-step {
+        color: var(--med-primary-dark) !important;
+        border-color: #d4e5f3;
+        background: #ffffff;
+    }
+    .clinic-identity-card {
+        grid-template-columns: 190px minmax(0, 1fr);
+        gap: 30px;
+        padding: 30px;
+        border: 1px solid var(--med-line);
+        border-radius: 16px;
+        background:
+            linear-gradient(90deg, rgba(16,166,160,0.98) 0 6px, transparent 6px),
+            radial-gradient(circle at 88% 14%, rgba(23,105,170,0.12), transparent 30%),
+            linear-gradient(135deg, #ffffff 0%, #f3f9ff 52%, #ffffff 100%);
+        box-shadow: 0 22px 54px rgba(15,61,99,0.10);
+    }
+    .clinic-portrait-lg,
+    .clinic-portrait-placeholder {
+        width: 150px;
+        height: 150px;
+        border: 6px solid #ffffff;
+        box-shadow: 0 18px 38px rgba(15,61,99,0.18);
+        background: #eaf5ff;
+    }
+    .clinic-portrait-placeholder {
+        color: var(--med-primary) !important;
+    }
+    .clinic-hero-logo img {
+        max-width: 160px;
+        max-height: 58px;
+    }
+    .clinic-identity-kicker,
+    .booking-kicker {
+        color: var(--med-accent) !important;
+        letter-spacing: 0 !important;
+    }
+    .clinic-identity-name {
+        color: var(--med-ink) !important;
+        font-size: clamp(1.95rem, 4vw, 3rem);
+    }
+    .clinic-identity-copy,
+    .booking-copy {
+        color: var(--med-muted) !important;
+    }
+    .clinic-contact-chip {
+        border: 1px solid #d2e3ef;
+        background: rgba(255,255,255,0.86);
+        color: var(--med-ink) !important;
+        box-shadow: 0 8px 20px rgba(15,61,99,0.05);
+    }
+    .custom-banner {
+        border-radius: 16px;
+        border: 1px solid var(--med-line);
+        box-shadow: 0 18px 44px rgba(15,61,99,0.08);
+    }
+    .announcement-box {
+        background: #fff9eb;
+        border-left: 5px solid var(--med-warm);
+        color: #694a10 !important;
+        border-radius: 0 12px 12px 0;
+        box-shadow: 0 10px 26px rgba(105,74,16,0.06);
+    }
+    .booking-intro {
+        align-items: stretch;
+        border-bottom: 1px solid var(--med-line);
+        padding-top: 30px;
+        padding-bottom: 24px;
+    }
+    .booking-title {
+        color: var(--med-ink) !important;
+        font-size: clamp(2.15rem, 4.3vw, 3.05rem);
+    }
+    .booking-meta {
+        min-width: 270px;
+        padding: 16px 18px 16px 20px;
+        border-left: 4px solid var(--med-accent);
+        border-radius: 0 14px 14px 0;
+        background: #f4fbff;
+        color: var(--med-muted) !important;
+    }
+    .booking-meta strong {
+        color: var(--med-ink) !important;
+    }
+    .field-heading, .slot-heading {
+        color: var(--med-ink) !important;
+    }
+    .selected-time {
+        border-left-color: var(--med-accent);
+        background: #eefbf9;
+        color: var(--med-ink) !important;
+    }
+    .working-hours-card,
+    .summary-card,
+    .footer-container,
+    .admin-card,
+    .profile-card,
+    .stat-box {
+        border: 1px solid var(--med-line);
+        border-radius: 16px;
+        background: #ffffff;
+        box-shadow: 0 16px 40px rgba(15,61,99,0.07);
+    }
+    .working-hours-card {
+        background: #f8fbff;
+        border-style: solid;
+    }
+    .service-badge {
+        background: var(--med-accent-soft);
+        color: #087a76 !important;
+        border-color: #bcebe7;
+    }
+    .service-badge:hover {
+        background: var(--med-accent);
+        color: #ffffff !important;
+    }
+    .summary-title,
+    .summary-row strong {
+        color: var(--med-ink) !important;
+    }
+    .summary-total {
+        color: var(--med-primary) !important;
+    }
+    .footer-btn {
+        background: #eef6ff;
+        color: var(--med-primary) !important;
+        border: 1px solid #cfe2f2;
+        border-radius: 10px;
+    }
+    .btn-red>button {
+        background: linear-gradient(135deg, #dc6658, #ef7b6d) !important;
+        border-color: #dc6658 !important;
+    }
+    .col-header {
+        border-radius: 12px;
+        box-shadow: 0 10px 22px rgba(15,61,99,0.10);
+    }
+    .stAlert {
+        border-radius: 14px;
+    }
+    @media (max-width: 760px) {
+        .clinic-identity-card {
+            border-radius: 16px;
+            padding: 22px 16px;
+        }
+        .clinic-portrait-lg,
+        .clinic-portrait-placeholder {
+            width: 120px;
+            height: 120px;
+        }
+        .booking-meta {
+            border-left-width: 4px;
+            border-radius: 0 12px 12px 0;
+            min-width: 0;
+        }
+        div[role="radiogroup"] {
+            width: 100%;
+        }
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -1469,7 +1725,7 @@ elif sayfa == SAYFA_ADMIN:
                     hz = v[0]
                     vaka_sayilari[hz] = vaka_sayilari.get(hz, 0) + 1
                 vaka_metni = " • ".join([f"**{adet}** adet {guvenli_metin(isim)}" for isim, adet in vaka_sayilari.items()])
-                st.markdown(f'<div class="stat-box" style="text-align:left; background-color:#e6f2f1; border-color:#bce0df;"><p style="color:#0b7a75; font-size:1.1em; margin-bottom:10px;">Bugün kliniğinizde beklenen hastalar:</p><h4>{vaka_metni}</h4></div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="stat-box" style="text-align:left; background-color:#eef6ff; border-color:#cfe2f2;"><p style="color:#1769aa; font-size:1.1em; margin-bottom:10px;">Bugün kliniğinizde beklenen hastalar:</p><h4>{vaka_metni}</h4></div>', unsafe_allow_html=True)
             
             st.markdown("<hr style='margin: 25px 0;'>", unsafe_allow_html=True)
             st.subheader("📢 Canlı Duyuru Panosu")
