@@ -1068,6 +1068,356 @@ st.markdown("""
             width: 100%;
         }
     }
+
+    /* Professional clinic interface refresh */
+    :root {
+        --clinic-page: #f6f9fb;
+        --clinic-card: #ffffff;
+        --clinic-ink: #08243a;
+        --clinic-muted: #5b6d7e;
+        --clinic-line: #d9e6ee;
+        --clinic-primary: #0f6f8f;
+        --clinic-primary-2: #159c96;
+        --clinic-soft: #edf8f7;
+        --clinic-warm: #f4b84a;
+        --clinic-danger: #d96356;
+    }
+    html, body, .stApp, [data-testid="stAppViewContainer"] {
+        background:
+            linear-gradient(180deg, #ffffff 0%, var(--clinic-page) 48%, #ffffff 100%) !important;
+        color: var(--clinic-ink) !important;
+    }
+    .block-container {
+        max-width: 1140px !important;
+        padding-top: 1.1rem !important;
+    }
+    [data-testid="stHeader"] {
+        background: rgba(255,255,255,0.98) !important;
+        border-bottom: 1px solid var(--clinic-line) !important;
+        box-shadow: 0 6px 22px rgba(8,36,58,0.04) !important;
+    }
+    div[role="radiogroup"] {
+        background: var(--clinic-card) !important;
+        border: 1px solid var(--clinic-line) !important;
+        border-radius: 999px !important;
+        padding: 6px 8px !important;
+        box-shadow: 0 14px 32px rgba(8,36,58,0.07) !important;
+        width: fit-content !important;
+        margin: 0 0 18px !important;
+    }
+    div[role="radiogroup"] label {
+        border-radius: 999px !important;
+        padding: 8px 12px !important;
+        color: var(--clinic-ink) !important;
+        font-weight: 700 !important;
+    }
+    .clinic-hero-panel {
+        display: grid;
+        grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+        min-height: 360px;
+        border: 1px solid var(--clinic-line);
+        border-radius: 18px;
+        overflow: hidden;
+        background: var(--clinic-card);
+        box-shadow: 0 24px 60px rgba(8,36,58,0.12);
+        margin: 10px 0 22px;
+    }
+    .clinic-hero-copy {
+        padding: clamp(24px, 4vw, 42px);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        background:
+            linear-gradient(90deg, rgba(21,156,150,0.95) 0 6px, transparent 6px),
+            radial-gradient(circle at 0% 0%, rgba(21,156,150,0.12), transparent 33%),
+            linear-gradient(135deg, #ffffff 0%, #f5fbfb 100%);
+    }
+    .clinic-hero-kicker,
+    .booking-kicker {
+        color: var(--clinic-primary-2) !important;
+        font-size: 0.78rem !important;
+        line-height: 1.2 !important;
+        font-weight: 900 !important;
+        text-transform: uppercase !important;
+        margin-bottom: 10px !important;
+    }
+    .clinic-hero-title {
+        color: var(--clinic-ink) !important;
+        font-size: clamp(2.1rem, 4.2vw, 3.35rem) !important;
+        line-height: 1.04 !important;
+        margin: 0 0 14px !important;
+        font-weight: 900 !important;
+    }
+    .clinic-hero-text {
+        color: var(--clinic-muted) !important;
+        font-size: 1.04rem !important;
+        line-height: 1.62 !important;
+        max-width: 640px !important;
+        margin: 0 0 20px !important;
+    }
+    .clinic-contact-row {
+        gap: 10px !important;
+    }
+    .clinic-contact-chip {
+        border: 1px solid #cfe2ea !important;
+        background: rgba(255,255,255,0.88) !important;
+        color: var(--clinic-ink) !important;
+        border-radius: 999px !important;
+        padding: 9px 13px !important;
+        box-shadow: 0 10px 22px rgba(8,36,58,0.06) !important;
+        text-decoration: none !important;
+        font-weight: 800 !important;
+    }
+    .clinic-hero-visual {
+        position: relative;
+        min-height: 360px;
+        background:
+            linear-gradient(135deg, rgba(8,36,58,0.10), rgba(21,156,150,0.16)),
+            #edf5f7;
+        overflow: hidden;
+    }
+    .clinic-hero-visual img.clinic-banner-photo {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        filter: saturate(0.94) contrast(1.03);
+    }
+    .clinic-hero-visual::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+            linear-gradient(180deg, rgba(8,36,58,0.04), rgba(8,36,58,0.30)),
+            linear-gradient(90deg, rgba(255,255,255,0.28), transparent 42%);
+    }
+    .clinic-hero-profile {
+        position: absolute;
+        left: 22px;
+        right: 22px;
+        bottom: 22px;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 14px;
+        border-radius: 16px;
+        background: rgba(255,255,255,0.92);
+        border: 1px solid rgba(255,255,255,0.82);
+        box-shadow: 0 20px 42px rgba(8,36,58,0.18);
+        backdrop-filter: blur(10px);
+    }
+    .clinic-portrait-lg,
+    .clinic-portrait-placeholder {
+        width: 82px !important;
+        height: 82px !important;
+        flex: 0 0 82px !important;
+        border-radius: 16px !important;
+        border: 3px solid #ffffff !important;
+        box-shadow: 0 14px 26px rgba(8,36,58,0.16) !important;
+        object-fit: cover !important;
+    }
+    .clinic-portrait-placeholder {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background: var(--clinic-soft) !important;
+        color: var(--clinic-primary) !important;
+        font-size: 1.4rem !important;
+        font-weight: 900 !important;
+    }
+    .clinic-profile-name {
+        color: var(--clinic-ink) !important;
+        font-weight: 900 !important;
+        line-height: 1.22 !important;
+        font-size: 0.98rem !important;
+    }
+    .clinic-profile-meta {
+        color: var(--clinic-muted) !important;
+        font-weight: 700 !important;
+        font-size: 0.86rem !important;
+        margin-top: 4px !important;
+    }
+    .clinic-hero-logo img {
+        max-width: 140px !important;
+        max-height: 42px !important;
+        object-fit: contain !important;
+        margin-top: 7px !important;
+    }
+    .booking-intro {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) minmax(260px, 330px) !important;
+        gap: 24px !important;
+        align-items: stretch !important;
+        padding: 26px !important;
+        margin: 22px 0 20px !important;
+        border: 1px solid var(--clinic-line) !important;
+        border-radius: 18px !important;
+        background: var(--clinic-card) !important;
+        box-shadow: 0 18px 44px rgba(8,36,58,0.08) !important;
+    }
+    .booking-title {
+        color: var(--clinic-ink) !important;
+        font-size: clamp(2rem, 3.8vw, 2.9rem) !important;
+        line-height: 1.08 !important;
+        font-weight: 900 !important;
+    }
+    .booking-copy {
+        color: var(--clinic-muted) !important;
+        line-height: 1.62 !important;
+    }
+    .booking-meta {
+        min-width: 0 !important;
+        border-left: 0 !important;
+        border-radius: 14px !important;
+        padding: 16px 18px !important;
+        background: #f1f8fb !important;
+        border: 1px solid #d8eaf0 !important;
+        color: var(--clinic-muted) !important;
+    }
+    .booking-meta strong {
+        color: var(--clinic-ink) !important;
+    }
+    .announcement-box {
+        border-radius: 14px !important;
+        border-left: 0 !important;
+        border-top: 4px solid var(--clinic-warm) !important;
+        background: #fff9ec !important;
+        color: #68470c !important;
+        padding: 15px 18px !important;
+        box-shadow: 0 14px 34px rgba(104,71,12,0.07) !important;
+        overflow-wrap: anywhere !important;
+    }
+    .field-heading,
+    .slot-heading {
+        color: var(--clinic-ink) !important;
+        font-size: 1.08rem !important;
+        font-weight: 900 !important;
+    }
+    .stDateInput input,
+    .stTextInput input,
+    .stTextArea textarea,
+    .stSelectbox div[data-baseweb="select"] > div,
+    div[data-baseweb="input"],
+    div[data-baseweb="textarea"],
+    div[data-baseweb="base-input"] {
+        border: 1.5px solid #cbdfea !important;
+        border-radius: 12px !important;
+        background: #ffffff !important;
+        box-shadow: 0 10px 24px rgba(8,36,58,0.05) !important;
+    }
+    .stButton>button,
+    .stDownloadButton>button {
+        border-radius: 12px !important;
+        background: linear-gradient(135deg, var(--clinic-primary), var(--clinic-primary-2)) !important;
+        border: 1px solid rgba(15,111,143,0.78) !important;
+        box-shadow: 0 12px 24px rgba(15,111,143,0.20) !important;
+        font-weight: 850 !important;
+    }
+    .stButton>button:hover,
+    .stDownloadButton>button:hover {
+        transform: translateY(-1px) !important;
+        box-shadow: 0 16px 30px rgba(15,111,143,0.24) !important;
+    }
+    .selected-time,
+    .summary-card,
+    .working-hours-card,
+    .footer-container,
+    .admin-card,
+    .profile-card,
+    .stat-box {
+        border: 1px solid var(--clinic-line) !important;
+        border-radius: 16px !important;
+        background: #ffffff !important;
+        box-shadow: 0 18px 42px rgba(8,36,58,0.08) !important;
+    }
+    .selected-time {
+        border-left: 5px solid var(--clinic-primary-2) !important;
+        background: #f0fbfa !important;
+    }
+    .summary-card {
+        padding: 22px !important;
+    }
+    .summary-total {
+        color: var(--clinic-primary) !important;
+        background: #f0f8fb !important;
+        border-radius: 12px !important;
+        padding: 12px !important;
+        text-align: center !important;
+    }
+    .footer-container {
+        background: #fbfdfe !important;
+    }
+    .footer-btn {
+        border-radius: 999px !important;
+        background: #eef8fb !important;
+        color: var(--clinic-primary) !important;
+        border-color: #cce2ea !important;
+    }
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px !important;
+        border-bottom: 1px solid var(--clinic-line) !important;
+    }
+    .stTabs [data-baseweb="tab"] {
+        border-radius: 12px 12px 0 0 !important;
+        padding: 10px 14px !important;
+        color: var(--clinic-muted) !important;
+        font-weight: 800 !important;
+    }
+    .stTabs [aria-selected="true"] {
+        background: #eef8fb !important;
+        color: var(--clinic-primary) !important;
+    }
+    .col-header {
+        border-radius: 14px !important;
+        padding: 12px !important;
+        box-shadow: 0 12px 26px rgba(8,36,58,0.12) !important;
+    }
+    [data-testid="stExpander"] {
+        border: 1px solid var(--clinic-line) !important;
+        border-radius: 14px !important;
+        background: #ffffff !important;
+        box-shadow: 0 10px 24px rgba(8,36,58,0.05) !important;
+        overflow: hidden !important;
+    }
+    @media (max-width: 820px) {
+        .block-container {
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+            padding-bottom: 5rem !important;
+        }
+        div[role="radiogroup"] {
+            width: 100% !important;
+            border-radius: 14px !important;
+        }
+        .clinic-hero-panel {
+            grid-template-columns: 1fr !important;
+            min-height: 0 !important;
+            border-radius: 16px !important;
+        }
+        .clinic-hero-copy {
+            padding: 24px 18px !important;
+        }
+        .clinic-hero-visual {
+            min-height: 230px !important;
+        }
+        .clinic-hero-profile {
+            left: 14px !important;
+            right: 14px !important;
+            bottom: 14px !important;
+        }
+        .booking-intro {
+            grid-template-columns: 1fr !important;
+            padding: 20px 16px !important;
+        }
+        .clinic-contact-chip {
+            width: 100% !important;
+            justify-content: center !important;
+            border-radius: 12px !important;
+        }
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -1495,25 +1845,34 @@ if sayfa == SAYFA_RANDEVU:
 
     profil_src = get_image_data_uri(gorunen_p_img, max_width=420) if gorunen_p_img else ""
     logo_src = get_image_data_uri(gorunen_logo, max_width=420) if gorunen_logo else ""
+    banner_src = get_image_data_uri(gorunen_banner, max_width=1400) if gorunen_banner else ""
     profil_html = (
         f'<img class="clinic-portrait-lg" src="{profil_src}" alt="Hoca profil resmi">'
         if profil_src
         else '<div class="clinic-portrait-placeholder">OP</div>'
     )
     logo_html = f'<div class="clinic-hero-logo"><img src="{logo_src}" alt="Klinik logosu"></div>' if logo_src else ""
-    kimlik_karti_html = f"""<section class="clinic-identity-card">
-<div class="clinic-identity-media">
-{profil_html}
-{logo_html}
-</div>
-<div>
-<div class="clinic-identity-kicker">Online Randevu</div>
-<h1 class="clinic-identity-name">{p_unvan_html}</h1>
-<p class="clinic-identity-copy">Uygun tarih ve saati seçerek randevu talebinizi güvenli şekilde iletebilirsiniz.</p>
+    banner_html = f'<img class="clinic-banner-photo" src="{banner_src}" alt="Klinik görseli">' if banner_src else ""
+    kimlik_karti_html = f"""<section class="clinic-hero-panel">
+<div class="clinic-hero-copy">
+<div class="clinic-hero-kicker">Online Klinik Randevu</div>
+<h1 class="clinic-hero-title">Randevunuzu güvenle oluşturun</h1>
+<p class="clinic-hero-text">{p_unvan_html} için uygun tarih ve saati seçerek randevu talebinizi iletebilirsiniz. Talebiniz yönetim panelinden kontrol edilip onaylanır.</p>
 <div class="clinic-contact-row">
 <span class="clinic-contact-chip">📍 {p_ofis_html}</span>
 <a class="clinic-contact-chip" href="tel:{p_tel_href}">📞 {p_tel_html}</a>
 <a class="clinic-contact-chip" href="mailto:{p_email_href}">✉️ {p_email_html}</a>
+</div>
+</div>
+<div class="clinic-hero-visual">
+{banner_html}
+<div class="clinic-hero-profile">
+{profil_html}
+<div>
+<div class="clinic-profile-name">{p_unvan_html}</div>
+<div class="clinic-profile-meta">Fizyoterapi Kliniği</div>
+{logo_html}
+</div>
 </div>
 </div>
 </section>"""
